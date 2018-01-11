@@ -133,7 +133,10 @@ class JanewayHandler extends Handler {
 			}
 			$body .= "------------------------------------------------------\n\n";
 		} else {
-			var_dump($article_comments);
+			foreach ($article_comments as $comment) {
+				$comment_data = $comment->_data;
+				$body .= $comment_data['datePosted'] . ' - ' . $comment_data['comments'] . "\n\n";
+			}
 		}
 
 		return $body;
@@ -190,6 +193,7 @@ class JanewayHandler extends Handler {
 					'email' => $author->getEmail(),
 					'bio' => $author->getLocalizedBiography(),
 					'affiliation' => $author->getLocalizedAffiliation(),
+					'email' => $author->getEmail(),
 				);
 				array_push($authors_array, $author_array);
 			}
@@ -215,6 +219,11 @@ class JanewayHandler extends Handler {
 					$review_array['recommendation'] = $review->getRecommendation();
 					$review_array['date_complete'] = $review->getDateCompleted();
 					$review_array['comments'] = $this->get_reviewer_comments($review->getReviewId());
+
+
+					$user_dao = DAORegistry::getDAO('UserDAO');
+					$user = $user_dao->getById($review->getReviewerId());
+					$review_array['email'] = $user->getEmail();
 
 					if ($review->getReviewerFileId()) {
 						$review_array['review_file_url'] = $journal->getUrl() . '/editor/downloadFile/' . $submission->getId() . '/' . $review->getReviewerFileId();
