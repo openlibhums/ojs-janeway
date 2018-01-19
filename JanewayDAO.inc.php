@@ -10,12 +10,5 @@
 
 class JanewayDAO extends DAO {
 
-	function get_excluded_emails() {
-		$sql = <<< EOF
-			SELECT * FROM kudos_emails;
-EOF;
-		return $this->retrieve($sql);
-	}
-
 }
 

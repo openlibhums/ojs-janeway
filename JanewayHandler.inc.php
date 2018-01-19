@@ -142,6 +142,23 @@ class JanewayHandler extends Handler {
 		return $body;
 	}
 
+	function utf8ize($d) {
+
+		if (is_array($d)) {
+			foreach ($d as $k => $v) 
+				$d[$k] = $this->utf8ize($v);
+		} elseif (is_object($d)) {
+			foreach ($d as $k => $v) 
+				$d->$k = $this->utf8ize($v);
+		} else {
+		 	if (!$encoding && !$encoding == 'UTF-8'){
+		 		$d = utf8_encode($d);
+		 	}
+		}
+
+		return $d;
+	}
+
 	function build_download_url($journal, $submission_id, $file_id) {
 		if ($journal && $submission_id && $file_id) {
 			return $journal->getUrl() . '/editor/downloadFile/' . $submission_id . '/' . $file_id;
@@ -167,11 +184,15 @@ class JanewayHandler extends Handler {
 
 		import('classes.file.ArticleFileManager');
 		$editorSubmissionDao =& DAORegistry::getDAO('EditorSubmissionDAO');
+		$sectionEditorSubmissionDao =& DAORegistry::getDAO('SectionEditorSubmissionDAO');
 
 		if ($request_type == 'in_review') {
 			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0);
 		} elseif ($request_type == 'in_editing') {
 			$submissions =& $editorSubmissionDao->getEditorSubmissionsInEditing($journal->getId(), 0, 0);
+		} elseif ($request_type == 'published') {
+			$articleDao =& DAORegistry::getDAO('PublishedArticleDAO');
+			$submissions =& $articleDao->getPublishedArticlesByJournalId($journal->getId());
 		} else {
 			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0);
 		}
@@ -181,7 +202,12 @@ class JanewayHandler extends Handler {
 		foreach ($submissions->toArray() as $submission) {
 			$submission_array = array();
 
+			if ($request_type == 'published') {
+				$submission =& $sectionEditorSubmissionDao->getSectionEditorSubmission($submission->getId());
+			}
+
 			// Generic Submission Meta
+			$submission_array['ojs_id'] = $submission->getId();
 			$submission_array['title'] = $submission->getArticleTitle();
 			$submission_array['abstract'] = $submission->getArticleAbstract();
 			$submission_array['section'] = $submission->getSectionTitle();
@@ -245,7 +271,7 @@ class JanewayHandler extends Handler {
 					$review_array['date_acknowledged'] = $review->getDateAcknowledged();
 					$review_array['recommendation'] = $review->getRecommendation();
 					$review_array['date_complete'] = $review->getDateCompleted();
-					$review_array['comments'] = $this->get_reviewer_comments($review->getReviewId());
+					$review_array['comments'] = $this->get_reviewer_comments($review->getReviewId(), $submission->getId());
 
 
 					$user_dao = DAORegistry::getDAO('UserDAO');
@@ -268,92 +294,160 @@ class JanewayHandler extends Handler {
 			// Copyedit assignments
 			$copyeditor = $submission->getUserBySignoffType('SIGNOFF_COPYEDITING_INITIAL');
 			$copyedit_dates = $submission->getSignoff('SIGNOFF_COPYEDITING_INITIAL');
+			$copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_INITIAL');
 			$copyediting_array = array();
 
-			$initial_copyeditor_array = array(
-				'email' => $copyeditor->getEmail(),
-				'first_name' => $copyeditor->getFirstName(),
-				'last_name' => $copyeditor->getLastName(),
-				'notified' => $copyedit_dates->_data['dateNotified'],
-				'underway' => $copyedit_dates->_data['dateUnderway'],
-				'complete' => $copyedit_dates->_data['dateCompleted'],
-				'file' => $this->build_download_url($journal, $submission->getId(), $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_INITIAL')->getFileId()),
-			);
-			$copyediting_array['initial'] = $initial_copyeditor_array;
+			if ($copyeditor) {
+				$initial_copyeditor_array = array(
+					'email' => $copyeditor->getEmail(),
+					'first_name' => $copyeditor->getFirstName(),
+					'last_name' => $copyeditor->getLastName(),
+					'notified' => $copyedit_dates->_data['dateNotified'],
+					'underway' => $copyedit_dates->_data['dateUnderway'],
+					'complete' => $copyedit_dates->_data['dateCompleted'],
+				);
+				if ($copyedit_file) {
+					$initial_copyeditor_array['file'] = $this->build_download_url($journal, $submission->getId(), $copyedit_file->getFileId());
+				}
+				$copyediting_array['initial'] = $initial_copyeditor_array;
 
-			$author_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_AUTHOR');
-			$author_copyedit_array = array(
-				'notified' => $author_copyedit->_data['dateNotified'],
-				'underway' => $author_copyedit->_data['dateUnderway'],
-				'complete' => $author_copyedit->_data['dateCompleted'],
-				'file' => $this->build_download_url($journal, $submission->getId(), $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_AUTHOR')->getFileId()),
-			);
-			$copyediting_array['author'] = $author_copyedit_array;
+				$author_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_AUTHOR');
+				$author_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_AUTHOR');
+				$author_copyedit_array = array(
+					'notified' => $author_copyedit->_data['dateNotified'],
+					'underway' => $author_copyedit->_data['dateUnderway'],
+					'complete' => $author_copyedit->_data['dateCompleted'],
+				);
 
-			$final_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_FINAL');
-			$final_copyedit_array = array(
-				'notified' => $final_copyedit->_data['dateNotified'],
-				'underway' => $final_copyedit->_data['dateUnderway'],
-				'complete' => $final_copyedit->_data['dateCompleted'],
-				'file' => $this->build_download_url($journal, $submission->getId(), $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_FINAL')->getFileId()),
-			);
-			$copyediting_array['final'] = $final_copyedit_array;
+				if ($author_copyedit_file) {
+					$author_copyedit_array['file'] = $this->build_download_url($journal, $submission->getId(), $author_copyedit_file->getFileId());
+				}
+				$copyediting_array['author'] = $author_copyedit_array;
 
-			$submission_array['copyediting'] = $copyediting_array;
+				$final_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_FINAL');
+				$final_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_FINAL');
+				$final_copyedit_array = array(
+					'notified' => $final_copyedit->_data['dateNotified'],
+					'underway' => $final_copyedit->_data['dateUnderway'],
+					'complete' => $final_copyedit->_data['dateCompleted'],
+				);
+				if ($final_copyedit_file) {
+					$final_copyedit_array['file'] = $this->build_download_url($journal, $submission->getId(), $final_copyedit_file->getFileId());
+				}
+
+				$copyediting_array['final'] = $final_copyedit_array;
+
+				$submission_array['copyediting'] = $copyediting_array;
+			}
 
 			// Proofreading assignments
 			$proofreader = $submission->getUserBySignoffType('SIGNOFF_PROOFREADING_PROOFREADER');
-			$author_proof = $submission->getSignoff('SIGNOFF_PROOFREADING_AUTHOR');
-			$proofing_array = array();
 
-			$author_proofing_array = array(
-				'notified' => $author_proof->_data['dateNotified'],
-				'underway' => $author_proof->_data['dateUnderway'],
-				'complete' => $author_proof->_data['dateCompleted'],
-			);
-			$proofing_array['author'] = $author_proofing_array;
+			if ($proofreader) {
+				$author_proof = $submission->getSignoff('SIGNOFF_PROOFREADING_AUTHOR');
+				$proofing_array = array();
 
-			$proofreader_proof = $submission->getSignoff('SIGNOFF_PROOFREADING_PROOFREADER');
-			$proofreader_proofing_array = array(
-				'notified' => $proofreader_proof->_data['dateNotified'],
-				'underway' => $proofreader_proof->_data['dateUnderway'],
-				'complete' => $proofreader_proof->_data['dateCompleted'],
-			);
-			$proofing_array['proofreader'] = $proofreader_proofing_array;
+				$author_proofing_array = array(
+					'notified' => $author_proof->_data['dateNotified'],
+					'underway' => $author_proof->_data['dateUnderway'],
+					'complete' => $author_proof->_data['dateCompleted'],
+				);
+				$proofing_array['author'] = $author_proofing_array;
 
-			$layout_proof = $submission->getSignoff('SIGNOFF_PROOFREADING_LAYOUT');
-			$layout_proofing_array = array(
-				'notified' => $layout_proof->_data['dateNotified'],
-				'underway' => $layout_proof->_data['dateUnderway'],
-				'complete' => $layout_proof->_data['dateCompleted'],
-			);
-			$proofing_array['layout'] = $layout_proofing_array;
-
-			$articleCommentDao =& DAORegistry::getDAO('ArticleCommentDAO');
-			$articleComments =& $articleCommentDao->getArticleComments($submission->getId(), COMMENT_TYPE_PROOFREAD);
-
-			$comments_array = array();
-			foreach ($articleComments as $comment) {
-				$comment_user = $user_dao->getById($comment->_data['authorId']);
-				$comment_array = array(
-					'title' => $comment->_data['commentTitle'],
-					'comments' => $comment->_data['comments'],
-					'author_email' => $comment_user->getEmail(),
-					'posted' => $comment->_data['datePosted']
+				$proofreader_proof = $submission->getSignoff('SIGNOFF_PROOFREADING_PROOFREADER');
+				$proofreader_proofing_array = array(
+					'notified' => $proofreader_proof->_data['dateNotified'],
+					'underway' => $proofreader_proof->_data['dateUnderway'],
+					'complete' => $proofreader_proof->_data['dateCompleted'],
 				);
 
-				array_push($comments_array, $comment_array);
+				if ($copyeditor) {
+					$proofreader_proofing_array['email'] = $copyeditor->getEmail();
+				}
+				
+				$proofing_array['proofreader'] = $proofreader_proofing_array;
+
+				$layout_proof = $submission->getSignoff('SIGNOFF_PROOFREADING_LAYOUT');
+				$layout_proofing_array = array(
+					'notified' => $layout_proof->_data['dateNotified'],
+					'underway' => $layout_proof->_data['dateUnderway'],
+					'complete' => $layout_proof->_data['dateCompleted'],
+				);
+				$proofing_array['layout'] = $layout_proofing_array;
+
+				$articleCommentDao =& DAORegistry::getDAO('ArticleCommentDAO');
+				$articleComments =& $articleCommentDao->getArticleComments($submission->getId(), COMMENT_TYPE_PROOFREAD);
+
+				$comments_array = array();
+				foreach ($articleComments as $comment) {
+					$comment_user = $user_dao->getById($comment->_data['authorId']);
+					$comment_array = array(
+						'title' => $comment->_data['commentTitle'],
+						'comments' => $comment->_data['comments'],
+						'author_email' => $comment_user->getEmail(),
+						'posted' => $comment->_data['datePosted']
+					);
+
+					array_push($comments_array, $comment_array);
+				}
+
+				$proofing_array['comments'] = $comments_array;
+
+				$submission_array['proofing'] = $proofing_array;
 			}
 
-			$proofing_array['comments'] = $comments_array;
+			// Layout - grab an article's galleys.
+			$layout_signoff = $submission->getSignoff('SIGNOFF_LAYOUT');
+			$layout_file = $submission->getFileBySignoffType('SIGNOFF_LAYOUT');
+			$layout_editor = $submission->getUserBySignoffType('SIGNOFF_LAYOUT');
+			
+			$sectionEditorSubmission =& $sectionEditorSubmissionDao->getSectionEditorSubmission($submission->getId());
+			$galleys =& $sectionEditorSubmission->getGalleys();
 
-			$submission_array['proofing'] = $proofing_array;
+			$layout_array = array(
+				'notified' => $layout_signoff->_data['dateNotified'],
+				'underway' => $layout_signoff->_data['dateUnderway'],
+				'complete' => $layout_signoff->_data['dateCompleted'],
+			);
+
+			if ($layout_editor) {
+				$layout_array['email'] = $layout_editor->getEmail();
+			}
+
+			// Fetch galleys
+			$galleys_array = array();
+			foreach ($galleys as $galley) {
+				$galley_array = array(
+					'label' => $galley->getGalleyLabel(),
+					'file' => $this->build_download_url($journal, $submission->getId(), $galley->getFileId()),
+				);
+				array_push($galleys_array, $galley_array);
+			}
+			$layout_array['galleys'] = $galleys_array;
+			$submission_array['layout'] = $layout_array;
+
+			// Get Issue
+			$publishedArticleDao =& DAORegistry::getDAO('PublishedArticleDAO');
+			$publishedArticle =& $publishedArticleDao->getPublishedArticleByArticleId($submission->getId());
+			if ($publishedArticle) {
+				$issueDao =& DAORegistry::getDAO('IssueDAO');
+				$issue =& $issueDao->getIssueById($publishedArticle->getIssueId());
+				$issue_array = array(
+					'issue_title' => $issue->getLocalizedTitle(),
+					'issue_volume' => $issue->getVolume(),
+					'issue_number' => $issue->getNumber(),
+					'issue_year' => $issue->getYear(),
+					'date_published' => $publishedArticle->getDatePublished(),
+				);
+				$submission_array['publication'] = $issue_array;
+			}
 
 			// Create file array
 			array_push($submissions_array, $submission_array);
 		}
-		
+
 		$out = array_values($submissions_array);
+		$out = $this->utf8ize($out);
 		$context = array(
 			"page_title" => "Janeway Export",
 			"json" => json_encode($out),

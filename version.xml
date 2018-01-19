@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE version SYSTEM "../../../lib/pkp/dtd/pluginVersion.dtd">
+
+<!--
+  * plugins/generic/janeway/version.xml
+  *
+  * Plugin for exporting data for ingestion by Janeway.
+  * Written by Andy Byers, Birkbeck College
+  *
+  -->
+<version>
+	<application>janeay</application>
+	<type>plugins.generic</type>
+	<release>1.0.0.0</release>
+	<date>2010-05-07</date>
+	<lazy-load>1</lazy-load>
+	<class>JanewayPlugin</class>
+</version>
