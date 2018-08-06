@@ -47,7 +47,7 @@ class JanewayHandler extends Handler {
 	/* sets up the template to be rendered */
 	function display($fname, $page_context=array()) {
 		// setup template
-		AppLocale::requireComponents(LOCALE_COMPONENT_OJS_MANAGER, LOCALE_COMPONENT_PKP_MANAGER);
+		Locale::requireComponents(LOCALE_COMPONENT_OJS_MANAGER, LOCALE_COMPONENT_PKP_MANAGER);
 		parent::setupTemplate();
 		
 		// setup template manager
@@ -151,9 +151,9 @@ class JanewayHandler extends Handler {
 			foreach ($d as $k => $v) 
 				$d->$k = $this->utf8ize($v);
 		} else {
-		 	if (!$encoding && !$encoding == 'UTF-8'){
-		 		$d = utf8_encode($d);
-		 	}
+			if(mb_detect_encoding($d) != "UTF-8") {
+				$d = utf8_encode($d); 
+			}
 		}
 
 		return $d;
@@ -173,8 +173,8 @@ class JanewayHandler extends Handler {
 	//
 	
 	/* handles requests to:
-		/janeeway/
-		/janeeway/index/
+		/janeway/
+		/janeway/index/
 	*/
 	function index($args, &$request) {
 
@@ -275,7 +275,7 @@ class JanewayHandler extends Handler {
 
 
 					$user_dao = DAORegistry::getDAO('UserDAO');
-					$user = $user_dao->getById($review->getReviewerId());
+					$user = $user_dao->getUser($review->getReviewerId());
 					$review_array['first_name'] = $user->getFirstName();
 					$review_array['last_name'] = $user->getLastName();
 					$review_array['email'] = $user->getEmail();
@@ -380,7 +380,7 @@ class JanewayHandler extends Handler {
 
 				$comments_array = array();
 				foreach ($articleComments as $comment) {
-					$comment_user = $user_dao->getById($comment->_data['authorId']);
+					$comment_user = $user_dao->getUser($comment->_data['authorId']);
 					$comment_array = array(
 						'title' => $comment->_data['commentTitle'],
 						'comments' => $comment->_data['comments'],
