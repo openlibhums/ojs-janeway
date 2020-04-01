@@ -3,7 +3,7 @@
 /**
  *
  * Plugin for exporting data for ingestion by Janeway.
- * Written by Andy Byers, Birkbeck COllege
+ * Written by Andy Byers, Birkbeck College
  *
  */
 
@@ -113,17 +113,17 @@ class JanewayHandler extends Handler {
 			$reviewFormElementDao =& DAORegistry::getDAO('ReviewFormElementDAO');
 			$reviewFormElements =& $reviewFormElementDao->getReviewFormElements($reviewFormId);
 			foreach ($reviewFormElements as $reviewFormElement) {
-				$body .= String::html2text($reviewFormElement->getLocalizedQuestion()) . ": \n";
+				$body .= PKPString::html2text($reviewFormElement->getLocalizedQuestion()) . ": \n";
 				$reviewFormResponse = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElement->getId());
 				if ($reviewFormResponse) {
 					$possibleResponses = $reviewFormElement->getLocalizedPossibleResponses();
 					if (in_array($reviewFormElement->getElementType(), $reviewFormElement->getMultipleResponsesElementTypes())) {
 						if ($reviewFormElement->getElementType() == REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES) {
 							foreach ($reviewFormResponse->getValue() as $value) {
-								$body .= "\t" . String::html2text($possibleResponses[$value-1]['content']) . "\n";
+								$body .= "\t" . PKPString::html2text($possibleResponses[$value-1]['content']) . "\n";
 							}
 						} else {
-							$body .= "\t" . String::html2text($possibleResponses[$reviewFormResponse->getValue()-1]['content']) . "\n";
+							$body .= "\t" . SPKPString::html2text($possibleResponses[$reviewFormResponse->getValue()-1]['content']) . "\n";
 						}
 						$body .= "\n";
 					} else {
@@ -163,7 +163,7 @@ class JanewayHandler extends Handler {
 		if ($journal && $submission_id && $file_id) {
 			return $journal->getUrl() . '/editor/downloadFile/' . $submission_id . '/' . $file_id;
 		} else {
-			return None;
+			return '';
 		}
 		
 	}
@@ -348,17 +348,17 @@ class JanewayHandler extends Handler {
 				$proofing_array = array();
 
 				$author_proofing_array = array(
-					'notified' => $author_proof->_data['dateNotified'],
-					'underway' => $author_proof->_data['dateUnderway'],
-					'complete' => $author_proof->_data['dateCompleted'],
+					'notified' => $author_proof->getdateNotified(),
+					'underway' => $author_proof->getdateUnderway(),
+					'complete' => $author_proof->getdateCompleted(),
 				);
 				$proofing_array['author'] = $author_proofing_array;
 
 				$proofreader_proof = $submission->getSignoff('SIGNOFF_PROOFREADING_PROOFREADER');
 				$proofreader_proofing_array = array(
-					'notified' => $proofreader_proof->_data['dateNotified'],
-					'underway' => $proofreader_proof->_data['dateUnderway'],
-					'complete' => $proofreader_proof->_data['dateCompleted'],
+					'notified' => $proofreader_proof->getdateNotified(),
+					'underway' => $proofreader_proof->getdateUnderway(),
+					'complete' => $proofreader_proof->getdateCompleted(),
 				);
 
 				if ($copyeditor) {
@@ -369,9 +369,9 @@ class JanewayHandler extends Handler {
 
 				$layout_proof = $submission->getSignoff('SIGNOFF_PROOFREADING_LAYOUT');
 				$layout_proofing_array = array(
-					'notified' => $layout_proof->_data['dateNotified'],
-					'underway' => $layout_proof->_data['dateUnderway'],
-					'complete' => $layout_proof->_data['dateCompleted'],
+					'notified' => $layout_proof->getdateNotified(),
+					'underway' => $layout_proof->getdateUnderway(),
+					'complete' => $layout_proof->getdateCompleted(),
 				);
 				$proofing_array['layout'] = $layout_proofing_array;
 
@@ -405,9 +405,9 @@ class JanewayHandler extends Handler {
 			$galleys =& $sectionEditorSubmission->getGalleys();
 
 			$layout_array = array(
-				'notified' => $layout_signoff->_data['dateNotified'],
-				'underway' => $layout_signoff->_data['dateUnderway'],
-				'complete' => $layout_signoff->_data['dateCompleted'],
+				'notified' => $layout_signoff->getDateNotified(),
+				'underway' => $layout_signoff->getDateUnderway(),
+				'complete' => $layout_signoff->getDateCompleted(),
 			);
 
 			if ($layout_editor) {
