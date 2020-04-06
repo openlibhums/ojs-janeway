@@ -461,12 +461,8 @@ class JanewayHandler extends Handler {
 		}
 
 		$out = array_values($submissions_array);
-		$out = $this->utf8ize($out);
-		$context = array(
-			"page_title" => "Janeway Export",
-			"json" => json_encode($out),
-		);
-		$this->display('index.tpl', $context);
+		header('Content-Type: application/json');
+		echo json_encode($submissions_array);
 	}
 
 	function users($args, &$request) {
