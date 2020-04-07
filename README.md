@@ -1,2 +1,2 @@
-# janeway
-An OJS plugin for injesting data into Janeway
+# OJS-Janeway
+An OJS plugin for exporting data for ingest into Janeway
