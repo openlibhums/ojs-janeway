@@ -246,6 +246,7 @@ class JanewayHandler extends Handler {
 					'affiliation' => $author->getLocalizedAffiliation(),
 					'email' => $author->getEmail(),
 					'country' => $author->getCountry(),
+					'orcid' => $author->getData('orcid'),
 				);
 				array_push($authors_array, $author_array);
 
