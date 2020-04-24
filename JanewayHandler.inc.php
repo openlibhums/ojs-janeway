@@ -215,6 +215,7 @@ class JanewayHandler extends Handler {
 			$submission_array['date_submitted'] = $submission->getDateSubmitted();
 			$submission_array['keywords'] = $submission->getLocalizedSubject();
 			$submission_array['doi'] = $submission->getStoredPubId('doi');
+			$submission_array['license'] = $submission->getLicenseURL();
 
 			// Get submission file url
 			$submission_array['manuscript_file_url'] = $journal->getUrl() . '/editor/downloadFile/' . $submission->getId() . '/' . $submission->getSubmissionFileId();
