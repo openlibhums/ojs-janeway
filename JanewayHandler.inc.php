@@ -305,9 +305,9 @@ class JanewayHandler extends Handler {
 					'email' => $copyeditor->getEmail(),
 					'first_name' => $copyeditor->getFirstName(),
 					'last_name' => $copyeditor->getLastName(),
-					'notified' => $copyedit_dates->_data['dateNotified'],
-					'underway' => $copyedit_dates->_data['dateUnderway'],
-					'complete' => $copyedit_dates->_data['dateCompleted'],
+					'notified' => $copyedit_dates->getdateNotified(),
+					'underway' => $copyedit_dates->getdateUnderway(),
+					'complete' => $copyedit_dates->getdateCompleted(),
 				);
 				if ($copyedit_file) {
 					$initial_copyeditor_array['file'] = $this->build_download_url($journal, $submission->getId(), $copyedit_file->getFileId());
@@ -317,9 +317,9 @@ class JanewayHandler extends Handler {
 				$author_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_AUTHOR');
 				$author_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_AUTHOR');
 				$author_copyedit_array = array(
-					'notified' => $author_copyedit->_data['dateNotified'],
-					'underway' => $author_copyedit->_data['dateUnderway'],
-					'complete' => $author_copyedit->_data['dateCompleted'],
+					'notified' => $author_copyedit->getdateNotified(),
+					'underway' => $author_copyedit->getdateUnderway(),
+					'complete' => $author_copyedit->getdateCompleted(),
 				);
 
 				if ($author_copyedit_file) {
@@ -330,9 +330,9 @@ class JanewayHandler extends Handler {
 				$final_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_FINAL');
 				$final_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_FINAL');
 				$final_copyedit_array = array(
-					'notified' => $final_copyedit->_data['dateNotified'],
-					'underway' => $final_copyedit->_data['dateUnderway'],
-					'complete' => $final_copyedit->_data['dateCompleted'],
+					'notified' => $final_copyedit->getdateNotified(),
+					'underway' => $final_copyedit->getdateUnderway(),
+					'complete' => $final_copyedit->getdateCompleted(),
 				);
 				if ($final_copyedit_file) {
 					$final_copyedit_array['file'] = $this->build_download_url($journal, $submission->getId(), $final_copyedit_file->getFileId());
