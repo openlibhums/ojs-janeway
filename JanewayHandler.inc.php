@@ -454,6 +454,45 @@ class JanewayHandler extends Handler {
 		echo json_encode($submissions_array);
 	}
 
+	function users($args, &$request) {
+
+		$user = $this->journal_manager_required($request);
+		$journal =& $request->getJournal();
+		$users_array = array();
+
+		$user_dao = DAORegistry::getDAO('UserDAO');
+		$roles_dao = DAORegistry::getDAO('RoleDAO');
+		$users = $this->dao->getAllUsers($journalId=$journal->getId());
+
+		foreach ($users as $user) {
+			$user_array = array(
+				'id' => $user['user_id'],
+				'salutation' => $user['salutation'],
+				'first_name' => $user['first_name'], 
+				'middle_name' => $user['middle_name'],
+				'last_name' => $user['last_name'],
+				'email' => $user['email'],
+			);
+
+			$roles = $roles_dao->getRolesByUserId(
+				$user['user_id'],
+				$journal->getId()
+			);
+			$role_list = array();
+
+			foreach ($roles as $role) {
+				array_push($role_list, $role->getRoleName());
+			}
+
+			$user_array['roles'] = $role_list;
+
+			array_push($users_array, $user_array);
+		}
+
+		header('Content-Type: application/json');
+		echo json_encode($users_array);
+	}
+
 }
 
 ?>
