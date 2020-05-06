@@ -247,6 +247,7 @@ class JanewayHandler extends Handler {
 					'email' => $author->getEmail(),
 					'country' => $author->getCountry(),
 					'orcid' => $author->getData('orcid'),
+					'sequence' => (float) $author->getSequence(),
 				);
 				array_push($authors_array, $author_array);
 
