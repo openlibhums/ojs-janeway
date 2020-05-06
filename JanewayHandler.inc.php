@@ -207,7 +207,7 @@ class JanewayHandler extends Handler {
 			}
 
 			// Generic Submission Meta
-			$submission_array['ojs_id'] = $submission->getId();
+			$submission_array['ojs_id'] = (int)$submission->getId();
 			$submission_array['title'] = $submission->getArticleTitle();
 			$submission_array['abstract'] = $submission->getArticleAbstract();
 			$submission_array['section'] = $submission->getSectionTitle();
@@ -436,6 +436,7 @@ class JanewayHandler extends Handler {
 				$issueDao =& DAORegistry::getDAO('IssueDAO');
 				$issue =& $issueDao->getIssueById($publishedArticle->getIssueId());
 				$issue_array = array(
+					'issue_id' => (int)$issue->getIssueId(),
 					'issue_title' => $issue->getLocalizedTitle(),
 					'issue_volume' => $issue->getVolume(),
 					'issue_number' => $issue->getNumber(),
@@ -466,7 +467,7 @@ class JanewayHandler extends Handler {
 
 		foreach ($users as $user) {
 			$user_array = array(
-				'id' => $user['user_id'],
+				'id' => (int)$user['user_id'],
 				'salutation' => $user['salutation'],
 				'first_name' => $user['first_name'], 
 				'middle_name' => $user['middle_name'],
@@ -491,6 +492,60 @@ class JanewayHandler extends Handler {
 
 		header('Content-Type: application/json');
 		echo json_encode($users_array);
+	}
+
+
+	function issues($args, &$request) {
+		$user = $this->journal_manager_required($request);
+		$journal =& $request->getJournal();
+		$issues_array = array();
+
+		$issues_dao = DAORegistry::getDAO('IssueDAO');
+		$issues = $this->dao->getPublishedIssues($journal->getId());
+
+		foreach ($issues as $issue_row) {
+			$issue = $issues_dao->getIssueById($issue_row['issue_id']);
+
+			$issue_array = array(
+				'id' => (int)$issue->getIssueId(),
+				'title' => $issue->getIssueTitle(),
+				'volume' => $issue->getVolume(),
+				'number' => $issue->getNumber(),
+				'year' => $issue->getYear(),
+				'published' => $issue->getDatePublished(),
+				'description' => $issue->getIssueDescription(),
+				'cover' => $request->getBaseUrl() . '/public/journals/'. $journal->getId() . '/' . $issue->getIssueFileName(),
+			);
+
+			if ($issues_dao->customIssueOrderingExists($journal->getId())) {
+				$custom_order = $issues_dao->getCustomIssueOrder($journal->getId(), $issue->getIssueId());
+				$issue_array['sequence'] = (int)$custom_order;
+			}
+
+			$pub_articles_dao = DAORegistry::getDAO('PublishedArticleDAO');
+			$published_articles = $pub_articles_dao->getPublishedArticlesInSections($issue->getIssueId());
+			$sections_array = array();
+
+			foreach ($published_articles as $section) {
+				$section_array = array();
+				$articles_array = array();
+				foreach ($section['articles'] as $article) {
+					$article_array = array(
+						'id' => (int)$article->_data['id'],
+						'pages' => $article->_data['pages'],
+					);
+					array_push($articles_array, $article_array);
+				}
+				$section_array['title'] = $section['title'];
+				$section_array['articles'] = $articles_array;
+				array_push($sections_array, $section_array);
+			}
+			$issue_array['sections'] = $sections_array;
+
+			array_push($issues_array, $issue_array);
+		}
+		header('Content-Type: application/json');
+		echo json_encode($issues_array);
 	}
 
 }
