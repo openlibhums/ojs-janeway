@@ -213,7 +213,7 @@ class JanewayHandler extends Handler {
 			$submission_array['section'] = $submission->getSectionTitle();
 			$submission_array['language'] = $submission->getLanguage();
 			$submission_array['date_submitted'] = $submission->getDateSubmitted();
-			$submission_array['keywords'] = $submission->getLocalizedSubject();
+			$submission_array['keywords'] = array_map('trim', explode(',', str_replace(';', ',', $submission->getLocalizedSubject())));
 			$submission_array['doi'] = $submission->getStoredPubId('doi');
 			$submission_array['license'] = $submission->getLicenseURL();
 
@@ -547,6 +547,41 @@ class JanewayHandler extends Handler {
 		}
 		header('Content-Type: application/json');
 		echo json_encode($issues_array);
+	}
+
+	function metrics($args, &$request) {
+		$user = $this->journal_manager_required($request);
+		$journal =& $request->getJournal();
+
+		$views = $this->dao->getViewMetrics($journal->getId());
+		$downloads = $this->dao->getDownloadMetrics($journal->getId());
+
+		$views_array = array();
+		foreach ($views as $view) {
+			$view_array = array(
+				'id'=>$view['submission_id'],
+				'count'=>$view['views'],
+			);
+			array_push($views_array, $view_array);
+		}
+
+		$downloads_array = array();
+		foreach ($downloads as $download) {
+			$download_array = array(
+				'id'=>$download['submission_id'],
+				'count'=>$download['downloads'],
+			);
+			array_push($downloads_array, $download_array);
+		}
+		
+
+		$metrics_array = array(
+			'views' => $views_array,
+			'downloads' => $downloads_array,
+		);
+
+		header('Content-Type: application/json');
+		echo json_encode($metrics_array);
 	}
 
 }
