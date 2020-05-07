@@ -437,11 +437,11 @@ class JanewayHandler extends Handler {
 				$issueDao =& DAORegistry::getDAO('IssueDAO');
 				$issue =& $issueDao->getIssueById($publishedArticle->getIssueId());
 				$issue_array = array(
-					'issue_id' => (int)$issue->getIssueId(),
-					'issue_title' => $issue->getLocalizedTitle(),
-					'issue_volume' => $issue->getVolume(),
-					'issue_number' => $issue->getNumber(),
-					'issue_year' => $issue->getYear(),
+					'id' => (int)$issue->getIssueId(),
+					'title' => $issue->getLocalizedTitle(),
+					'volume' => $issue->getVolume(),
+					'number' => $issue->getNumber(),
+					'year' => $issue->getYear(),
 					'date_published' => $publishedArticle->getDatePublished(),
 				);
 				$submission_array['publication'] = $issue_array;
@@ -513,7 +513,7 @@ class JanewayHandler extends Handler {
 				'volume' => $issue->getVolume(),
 				'number' => $issue->getNumber(),
 				'year' => $issue->getYear(),
-				'published' => $issue->getDatePublished(),
+				'date_published' => $issue->getDatePublished(),
 				'description' => $issue->getIssueDescription(),
 				'cover' => $request->getBaseUrl() . '/public/journals/'. $journal->getId() . '/' . $issue->getIssueFileName(),
 			);
