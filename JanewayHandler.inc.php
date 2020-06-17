@@ -159,6 +159,19 @@ class JanewayHandler extends Handler {
 		return $d;
 	}
 
+	function json_response($data) {
+		header('Content-Type: application/json');
+		$cleaned = $this->utf8ize($data);
+		$json_data = json_encode($cleaned, JSON_PRETTY_PRINT);
+		if ($json_data === false) {
+			$err = json_last_error();
+			header("HTTP/1.1 500 Internal Server Error");
+			echo $err;
+		} else {
+			echo $json_data;
+		}
+	}
+
 	function build_download_url($journal, $submission_id, $file_id) {
 		if ($journal && $submission_id && $file_id) {
 			return $journal->getUrl() . '/editor/downloadFile/' . $submission_id . '/' . $file_id;
@@ -491,8 +504,7 @@ class JanewayHandler extends Handler {
 			array_push($users_array, $user_array);
 		}
 
-		header('Content-Type: application/json');
-		echo json_encode($users_array);
+		$this->json_response($users_array);
 	}
 
 }
