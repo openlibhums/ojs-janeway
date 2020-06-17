@@ -151,9 +151,9 @@ class JanewayHandler extends Handler {
 			foreach ($d as $k => $v) 
 				$d->$k = $this->utf8ize($v);
 		} else {
-			if(mb_detect_encoding($d) != "UTF-8") {
-				$d = utf8_encode($d); 
-			}
+			$encoding =  mb_detect_encoding($d);
+			$d = iconv($encoding, 'UTF-8//IGNORE', $d);
+			echo($d);
 		}
 
 		return $d;
