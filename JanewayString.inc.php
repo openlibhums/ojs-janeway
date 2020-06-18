@@ -54,7 +54,7 @@ define ('CAMEL_CASE_HEAD_DOWN', 0x02);
 
 define('DEFAULT_ALLOWED_HTML', '<a> <em> <strong> <cite> <code> <ul> <ol> <li> <dl> <dt> <dd> <b> <i> <u> <img src|alt> <sup> <sub> <br> <p>');
 
-class PKPString {
+class JanewayString {
 	/**
 	 * Perform initialization required for the string wrapper library.
 	 */

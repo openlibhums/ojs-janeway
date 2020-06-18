@@ -12,7 +12,7 @@ error_reporting(E_ERROR);
 
 import('classes.handler.Handler');
 require_once('JanewayDAO.inc.php');
-require_once('PKPString.inc.php');
+require_once('JanewayString.inc.php');
 
 function redirect($url) {
 	header("Location: ". $url); // http://www.example.com/"); /* Redirect browser */
@@ -115,17 +115,17 @@ class JanewayHandler extends Handler {
 			$reviewFormElementDao =& DAORegistry::getDAO('ReviewFormElementDAO');
 			$reviewFormElements =& $reviewFormElementDao->getReviewFormElements($reviewFormId);
 			foreach ($reviewFormElements as $reviewFormElement) {
-				$body .= PKPString::html2text($reviewFormElement->getLocalizedQuestion()) . ": \n";
+				$body .= JanewayString::html2text($reviewFormElement->getLocalizedQuestion()) . ": \n";
 				$reviewFormResponse = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElement->getId());
 				if ($reviewFormResponse) {
 					$possibleResponses = $reviewFormElement->getLocalizedPossibleResponses();
 					if (in_array($reviewFormElement->getElementType(), $reviewFormElement->getMultipleResponsesElementTypes())) {
 						if ($reviewFormElement->getElementType() == REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES) {
 							foreach ($reviewFormResponse->getValue() as $value) {
-								$body .= "\t" . String::html2text($possibleResponses[$value-1]['content']) . "\n";
+								$body .= "\t" . JanewayString::html2text($possibleResponses[$value-1]['content']) . "\n";
 							}
 						} else {
-							$body .= "\t" . String::html2text($possibleResponses[$reviewFormResponse->getValue()-1]['content']) . "\n";
+							$body .= "\t" . JanewayString::html2text($possibleResponses[$reviewFormResponse->getValue()-1]['content']) . "\n";
 						}
 						$body .= "\n";
 					} else {
