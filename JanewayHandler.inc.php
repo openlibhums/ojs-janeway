@@ -12,6 +12,7 @@ error_reporting(E_ERROR);
 
 import('classes.handler.Handler');
 require_once('JanewayDAO.inc.php');
+require_once('PKPString.inc.php');
 
 function redirect($url) {
 	header("Location: ". $url); // http://www.example.com/"); /* Redirect browser */
@@ -114,7 +115,7 @@ class JanewayHandler extends Handler {
 			$reviewFormElementDao =& DAORegistry::getDAO('ReviewFormElementDAO');
 			$reviewFormElements =& $reviewFormElementDao->getReviewFormElements($reviewFormId);
 			foreach ($reviewFormElements as $reviewFormElement) {
-				$body .= String::html2text($reviewFormElement->getLocalizedQuestion()) . ": \n";
+				$body .= PKPString::html2text($reviewFormElement->getLocalizedQuestion()) . ": \n";
 				$reviewFormResponse = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElement->getId());
 				if ($reviewFormResponse) {
 					$possibleResponses = $reviewFormElement->getLocalizedPossibleResponses();
@@ -318,9 +319,9 @@ class JanewayHandler extends Handler {
 					'email' => $copyeditor->getEmail(),
 					'first_name' => $copyeditor->getFirstName(),
 					'last_name' => $copyeditor->getLastName(),
-					'notified' => $copyedit_dates->_data['dateNotified'],
-					'underway' => $copyedit_dates->_data['dateUnderway'],
-					'complete' => $copyedit_dates->_data['dateCompleted'],
+					'notified' => $copyedit_dates->getdateNotified(),
+					'underway' => $copyedit_dates->getdateUnderway(),
+					'complete' => $copyedit_dates->getdateCompleted(),
 				);
 				if ($copyedit_file) {
 					$initial_copyeditor_array['file'] = $this->build_download_url($journal, $submission->getId(), $copyedit_file->getFileId());
@@ -330,9 +331,9 @@ class JanewayHandler extends Handler {
 				$author_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_AUTHOR');
 				$author_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_AUTHOR');
 				$author_copyedit_array = array(
-					'notified' => $author_copyedit->_data['dateNotified'],
-					'underway' => $author_copyedit->_data['dateUnderway'],
-					'complete' => $author_copyedit->_data['dateCompleted'],
+					'notified' => $author_copyedit->getdateNotified(),
+					'underway' => $author_copyedit->getdateUnderway(),
+					'complete' => $author_copyedit->getdateCompleted(),
 				);
 
 				if ($author_copyedit_file) {
@@ -343,9 +344,9 @@ class JanewayHandler extends Handler {
 				$final_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_FINAL');
 				$final_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_FINAL');
 				$final_copyedit_array = array(
-					'notified' => $final_copyedit->_data['dateNotified'],
-					'underway' => $final_copyedit->_data['dateUnderway'],
-					'complete' => $final_copyedit->_data['dateCompleted'],
+					'notified' => $final_copyedit->getdateNotified(),
+					'underway' => $final_copyedit->getdateUnderway(),
+					'complete' => $final_copyedit->getdateCompleted(),
 				);
 				if ($final_copyedit_file) {
 					$final_copyedit_array['file'] = $this->build_download_url($journal, $submission->getId(), $final_copyedit_file->getFileId());
@@ -364,17 +365,17 @@ class JanewayHandler extends Handler {
 				$proofing_array = array();
 
 				$author_proofing_array = array(
-					'notified' => $author_proof->_data['dateNotified'],
-					'underway' => $author_proof->_data['dateUnderway'],
-					'complete' => $author_proof->_data['dateCompleted'],
+					'notified' => $author_proof->getdateNotified(),
+					'underway' => $author_proof->getdateUnderway(),
+					'complete' => $author_proof->getdateCompleted(),
 				);
 				$proofing_array['author'] = $author_proofing_array;
 
 				$proofreader_proof = $submission->getSignoff('SIGNOFF_PROOFREADING_PROOFREADER');
 				$proofreader_proofing_array = array(
-					'notified' => $proofreader_proof->_data['dateNotified'],
-					'underway' => $proofreader_proof->_data['dateUnderway'],
-					'complete' => $proofreader_proof->_data['dateCompleted'],
+					'notified' => $proofreader_proof->getdateNotified(),
+					'underway' => $proofreader_proof->getdateUnderway(),
+					'complete' => $proofreader_proof->getdateCompleted(),
 				);
 
 				if ($copyeditor) {
@@ -385,9 +386,9 @@ class JanewayHandler extends Handler {
 
 				$layout_proof = $submission->getSignoff('SIGNOFF_PROOFREADING_LAYOUT');
 				$layout_proofing_array = array(
-					'notified' => $layout_proof->_data['dateNotified'],
-					'underway' => $layout_proof->_data['dateUnderway'],
-					'complete' => $layout_proof->_data['dateCompleted'],
+					'notified' => $layout_proof->getdateNotified(),
+					'underway' => $layout_proof->getdateUnderway(),
+					'complete' => $layout_proof->getdateCompleted(),
 				);
 				$proofing_array['layout'] = $layout_proofing_array;
 
@@ -421,9 +422,9 @@ class JanewayHandler extends Handler {
 			$galleys =& $sectionEditorSubmission->getGalleys();
 
 			$layout_array = array(
-				'notified' => $layout_signoff->_data['dateNotified'],
-				'underway' => $layout_signoff->_data['dateUnderway'],
-				'complete' => $layout_signoff->_data['dateCompleted'],
+				'notified' => $layout_signoff->getDateNotified(),
+				'underway' => $layout_signoff->getDateUnderway(),
+				'complete' => $layout_signoff->getDateCompleted(),
 			);
 
 			if ($layout_editor) {
