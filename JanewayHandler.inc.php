@@ -153,7 +153,7 @@ class JanewayHandler extends Handler {
 				$d->$k = $this->utf8ize($v);
 		} else {
 			$encoding =  mb_detect_encoding($d);
-			$d = iconv($encoding, 'UTF-8//IGNORE', $d);
+			$d = iconv($encoding, 'UTF-8', $d);
 			echo($d);
 		}
 
