@@ -227,7 +227,7 @@ class JanewayHandler extends Handler {
 			$submission_array['section'] = $submission->getSectionTitle();
 			$submission_array['language'] = $submission->getLanguage();
 			$submission_array['date_submitted'] = $submission->getDateSubmitted();
-			$submission_array['keywords'] = $submission->getLocalizedSubject();
+			$submission_array['keywords'] = array_map('trim', explode(',', str_replace(';', ',', $submission->getLocalizedSubject())))
 
 			// Get submission file url
 			$submission_array['manuscript_file_url'] = $journal->getUrl() . '/editor/downloadFile/' . $submission->getId() . '/' . $submission->getSubmissionFileId();
