@@ -26,7 +26,7 @@ function raise404($msg='404 Not Found') {
 }
 
 function clean_string($v) {
-	// strips non-alpha-numeric characters from $v	
+	// strips non-alpha-numeric characters from $v
 	return preg_replace('/[^\-a-zA-Z0-9]+/', '',$v);
 }
 
@@ -44,16 +44,16 @@ class JanewayHandler extends Handler {
 		parent::Handler();
 		$this->dao = new JanewayDAO();
 	}
-	
+
 	/* sets up the template to be rendered */
 	function display($fname, $page_context=array()) {
 		// setup template
 		Locale::requireComponents(LOCALE_COMPONENT_OJS_MANAGER, LOCALE_COMPONENT_PKP_MANAGER);
 		parent::setupTemplate();
-		
+
 		// setup template manager
 		$templateMgr =& TemplateManager::getManager();
-		
+
 		// default page values
 		$context = array(
 			"page_title" => "Janeway"
@@ -146,10 +146,10 @@ class JanewayHandler extends Handler {
 	function utf8ize($d) {
 
 		if (is_array($d)) {
-			foreach ($d as $k => $v) 
+			foreach ($d as $k => $v)
 				$d[$k] = $this->utf8ize($v);
 		} elseif (is_object($d)) {
-			foreach ($d as $k => $v) 
+			foreach ($d as $k => $v)
 				$d->$k = $this->utf8ize($v);
 		} elseif (is_string($d)){
 			$encoding =  mb_detect_encoding($d);
@@ -178,13 +178,13 @@ class JanewayHandler extends Handler {
 		} else {
 			return None;
 		}
-		
+
 	}
 
 	//
 	// views
 	//
-	
+
 	/* handles requests to:
 		/janeway/
 		/janeway/index/
@@ -209,7 +209,7 @@ class JanewayHandler extends Handler {
 		} else {
 			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0);
 		}
-		
+
 		$submissions_array = array();
 
 		foreach ($submissions->toArray() as $submission) {
@@ -220,13 +220,14 @@ class JanewayHandler extends Handler {
 			}
 
 			// Generic Submission Meta
-			$submission_array['ojs_id'] = $submission->getId();
+			$submission_array['ojs_id'] = (int)$submission->getId();
 			$submission_array['title'] = $submission->getArticleTitle();
 			$submission_array['abstract'] = $submission->getArticleAbstract();
 			$submission_array['section'] = $submission->getSectionTitle();
 			$submission_array['language'] = $submission->getLanguage();
 			$submission_array['date_submitted'] = $submission->getDateSubmitted();
 			$submission_array['keywords'] = array_map('trim', explode(',', str_replace(';', ',', $submission->getLocalizedSubject())));
+			$submission_array['doi'] = $submission->getStoredPubId('doi');
 
 			// Get submission file url
 			$submission_array['manuscript_file_url'] = $journal->getUrl() . '/editor/downloadFile/' . $submission->getId() . '/' . $submission->getSubmissionFileId();
@@ -250,7 +251,7 @@ class JanewayHandler extends Handler {
 			$authors_array = array();
 			foreach ($authors as $author) {
 				$author_array = array(
-					'first_name' => $author->getFirstName(), 
+					'first_name' => $author->getFirstName(),
 					'last_name' => $author->getLastName(),
 					'email' => $author->getEmail(),
 					'bio' => $author->getLocalizedBiography(),
@@ -258,6 +259,7 @@ class JanewayHandler extends Handler {
 					'email' => $author->getEmail(),
 					'country' => $author->getCountry(),
 					'orcid' => $author->getData('orcid'),
+					'sequence' => (float) $author->getSequence(),
 				);
 				array_push($authors_array, $author_array);
 
@@ -297,7 +299,7 @@ class JanewayHandler extends Handler {
 					if ($review->getReviewerFileId()) {
 						$review_array['review_file_url'] = $journal->getUrl() . '/editor/downloadFile/' . $submission->getId() . '/' . $review->getReviewerFileId();
 					}
-					
+
 
 					array_push($reviews_array, $review_array);
 				}
@@ -378,7 +380,7 @@ class JanewayHandler extends Handler {
 				if ($copyeditor) {
 					$proofreader_proofing_array['email'] = $copyeditor->getEmail();
 				}
-				
+
 				$proofing_array['proofreader'] = $proofreader_proofing_array;
 
 				$layout_proof = $submission->getSignoff('SIGNOFF_PROOFREADING_LAYOUT');
@@ -414,7 +416,7 @@ class JanewayHandler extends Handler {
 			$layout_signoff = $submission->getSignoff('SIGNOFF_LAYOUT');
 			$layout_file = $submission->getFileBySignoffType('SIGNOFF_LAYOUT');
 			$layout_editor = $submission->getUserBySignoffType('SIGNOFF_LAYOUT');
-			
+
 			$sectionEditorSubmission =& $sectionEditorSubmissionDao->getSectionEditorSubmission($submission->getId());
 			$galleys =& $sectionEditorSubmission->getGalleys();
 
@@ -447,6 +449,7 @@ class JanewayHandler extends Handler {
 				$issueDao =& DAORegistry::getDAO('IssueDAO');
 				$issue =& $issueDao->getIssueById($publishedArticle->getIssueId());
 				$issue_array = array(
+					'issue_id' => (int)$issue->getIssueId(),
 					'issue_title' => $issue->getLocalizedTitle(),
 					'issue_volume' => $issue->getVolume(),
 					'issue_number' => $issue->getNumber(),
@@ -476,9 +479,9 @@ class JanewayHandler extends Handler {
 
 		foreach ($users as $user) {
 			$user_array = array(
-				'id' => $user['user_id'],
+				'id' => (int)$user['user_id'],
 				'salutation' => $user['salutation'],
-				'first_name' => $user['first_name'], 
+				'first_name' => $user['first_name'],
 				'middle_name' => $user['middle_name'],
 				'last_name' => $user['last_name'],
 				'email' => $user['email'],
@@ -500,6 +503,59 @@ class JanewayHandler extends Handler {
 		}
 
 		$this->json_response($users_array);
+	}
+
+	function issues($args, &$request) {
+		$user = $this->journal_manager_required($request);
+		$journal =& $request->getJournal();
+		$issues_array = array();
+
+		$issues_dao = DAORegistry::getDAO('IssueDAO');
+		$issues = $this->dao->getPublishedIssues($journal->getId());
+
+		foreach ($issues as $issue_row) {
+			$issue = $issues_dao->getIssueById($issue_row['issue_id']);
+
+			$issue_array = array(
+				'id' => (int)$issue->getIssueId(),
+				'title' => $issue->getIssueTitle(),
+				'volume' => $issue->getVolume(),
+				'number' => $issue->getNumber(),
+				'year' => $issue->getYear(),
+				'published' => $issue->getDatePublished(),
+				'description' => $issue->getIssueDescription(),
+				'cover' => $request->getBaseUrl() . '/public/journals/'. $journal->getId() . '/' . $issue->getIssueFileName(),
+			);
+
+			if ($issues_dao->customIssueOrderingExists($journal->getId())) {
+				$custom_order = $issues_dao->getCustomIssueOrder($journal->getId(), $issue->getIssueId());
+				$issue_array['sequence'] = (int)$custom_order;
+			}
+
+			$pub_articles_dao = DAORegistry::getDAO('PublishedArticleDAO');
+			$published_articles = $pub_articles_dao->getPublishedArticlesInSections($issue->getIssueId());
+			$sections_array = array();
+
+			foreach ($published_articles as $section) {
+				$section_array = array();
+				$articles_array = array();
+				foreach ($section['articles'] as $article) {
+					$article_array = array(
+						'id' => (int)$article->_data['id'],
+						'pages' => $article->_data['pages'],
+					);
+					array_push($articles_array, $article_array);
+				}
+				$section_array['title'] = $section['title'];
+				$section_array['articles'] = $articles_array;
+				array_push($sections_array, $section_array);
+			}
+			$issue_array['sections'] = $sections_array;
+
+			array_push($issues_array, $issue_array);
+		}
+		header('Content-Type: application/json');
+		echo json_encode($issues_array);
 	}
 
 }

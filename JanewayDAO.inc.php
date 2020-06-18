@@ -16,5 +16,13 @@ class JanewayDAO extends UserDAO {
 		$returner = new DAOResultFactory($result, $this, '_returnUserFromRowWithData');
 		return $result;
 	}
+
+	function &getPublishedIssues($journalId, $rangeInfo = null) {
+		$result =& $this->retrieveRange(
+			'SELECT i.* FROM issues i LEFT JOIN custom_issue_orders o ON (o.issue_id = i.issue_id) WHERE i.journal_id = ? AND i.published = 1 ORDER BY o.seq ASC, i.current DESC, i.date_published DESC',
+			(int) $journalId, $rangeInfo
+		);
+		return $result;
+	}
 }
 
