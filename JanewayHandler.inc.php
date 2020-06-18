@@ -1,4 +1,5 @@
 <?php
+error_reporting(E_ERROR);
 
 /**
  *
@@ -461,8 +462,7 @@ class JanewayHandler extends Handler {
 		}
 
 		$out = array_values($submissions_array);
-		header('Content-Type: application/json');
-		echo json_encode($submissions_array);
+		$this->json_response($submissions_array);
 	}
 
 	function users($args, &$request) {
