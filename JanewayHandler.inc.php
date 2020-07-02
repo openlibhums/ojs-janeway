@@ -229,6 +229,7 @@ class JanewayHandler extends Handler {
 			$submission_array['date_submitted'] = $submission->getDateSubmitted();
 			$submission_array['keywords'] = array_map('trim', explode(',', str_replace(';', ',', $submission->getLocalizedSubject())));
 			$submission_array['doi'] = $submission->getStoredPubId('doi');
+			$submission_array['license'] = $submission->getLicenseURL();
 
 			// Get submission file url
 			$submission_array['manuscript_file_url'] = $journal->getUrl() . '/editor/downloadFile/' . $submission->getId() . '/' . $submission->getSubmissionFileId();
@@ -450,11 +451,11 @@ class JanewayHandler extends Handler {
 				$issueDao =& DAORegistry::getDAO('IssueDAO');
 				$issue =& $issueDao->getIssueById($publishedArticle->getIssueId());
 				$issue_array = array(
-					'issue_id' => (int)$issue->getIssueId(),
-					'issue_title' => $issue->getLocalizedTitle(),
-					'issue_volume' => $issue->getVolume(),
-					'issue_number' => $issue->getNumber(),
-					'issue_year' => $issue->getYear(),
+					'id' => (int)$issue->getIssueId(),
+					'title' => $issue->getLocalizedTitle(),
+					'volume' => $issue->getVolume(),
+					'number' => $issue->getNumber(),
+					'year' => $issue->getYear(),
 					'date_published' => $publishedArticle->getDatePublished(),
 				);
 				$submission_array['publication'] = $issue_array;
@@ -505,6 +506,7 @@ class JanewayHandler extends Handler {
 
 		$this->json_response($users_array);
 	}
+
 
 	function issues($args, &$request) {
 		$user = $this->journal_manager_required($request);
