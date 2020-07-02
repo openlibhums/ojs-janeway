@@ -1,16 +1,11 @@
 <?php
 
 /**
- * @file classes/core/PKPString.inc.php
+ * @file ojs-janeway/JanewayString.inc.php
  *
- * Copyright (c) 2013-2019 Simon Fraser University
- * Copyright (c) 2000-2019 John Willinsky
- * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+ * @class JanewayString
  *
- * @class PKPString
- * @ingroup core
- *
- * @brief String manipulation wrapper class.
+ * @brief String manipulation wrapper class. Copied from class/core/PKPString.inc.php for backwards compatibility
  *
  */
 
@@ -62,7 +57,7 @@ class JanewayString {
 		$clientCharset = strtolower_codesafe(Config::getVar('i18n', 'client_charset'));
 
 		// Check if mbstring is installed (requires PHP >= 4.3.0)
-		if (PKPString::hasMBString()) {
+		if (JanewayString::hasMBString()) {
 			// mbstring routines are available
 			define('ENABLE_MBSTRING', true);
 
@@ -74,7 +69,7 @@ class JanewayString {
 
 		// Define modifier to be used in regexp_* routines
 		// FIXME Should non-UTF-8 encodings be supported with mbstring?
-		if ($clientCharset == 'utf-8' && PKPString::hasPCREUTF8()) {
+		if ($clientCharset == 'utf-8' && JanewayString::hasPCREUTF8()) {
 			define('PCRE_UTF8', 'u');
 		} else {
 			define('PCRE_UTF8', '');
@@ -198,7 +193,7 @@ class JanewayString {
 		if (function_exists('mb_substr_replace') === false) {
 			function mb_substr_replace($string, $replacement, $start, $length = null) {
 				if (extension_loaded('mbstring') === true) {
-					$string_length = PKPString::strlen($string);
+					$string_length = JanewayString::strlen($string);
 
 					if ($start < 0) {
 						$start = max(0, $string_length + $start);
@@ -216,7 +211,7 @@ class JanewayString {
 						$length = $string_length - $start;
 					}
 
-					return PKPString::substr($string, 0, $start) . $replacement . PKPString::substr($string, $start + $length, $string_length - $start - $length);
+					return JanewayString::substr($string, 0, $start) . $replacement . JanewayString::substr($string, $start + $length, $string_length - $start - $length);
 				}
 			}
 
@@ -316,7 +311,7 @@ class JanewayString {
 	 * @see http://ca.php.net/manual/en/function.regexp_grep.php
 	 */
 	function regexp_grep($pattern, $input) {
-		if (PCRE_UTF8 && !PKPString::utf8_compliant($input)) $input = PKPString::utf8_bad_strip($input);
+		if (PCRE_UTF8 && !JanewayString::utf8_compliant($input)) $input = JanewayString::utf8_bad_strip($input);
 		return preg_grep($pattern . PCRE_UTF8, $input);
 	}
 
@@ -324,7 +319,7 @@ class JanewayString {
 	 * @see http://ca.php.net/manual/en/function.regexp_match.php
 	 */
 	function regexp_match($pattern, $subject) {
-		if (PCRE_UTF8 && !PKPString::utf8_compliant($subject)) $subject = PKPString::utf8_bad_strip($subject);
+		if (PCRE_UTF8 && !JanewayString::utf8_compliant($subject)) $subject = JanewayString::utf8_bad_strip($subject);
 		return preg_match($pattern . PCRE_UTF8, $subject);
 	}
 
@@ -333,7 +328,7 @@ class JanewayString {
 	 */
 	function regexp_match_get($pattern, $subject, &$matches) {
 		// NOTE: This function was created since PHP < 5.x does not support optional reference parameters
-		if (PCRE_UTF8 && !PKPString::utf8_compliant($subject)) $subject = PKPString::utf8_bad_strip($subject);
+		if (PCRE_UTF8 && !JanewayString::utf8_compliant($subject)) $subject = JanewayString::utf8_bad_strip($subject);
 		return preg_match($pattern . PCRE_UTF8, $subject, $matches);
 	}
 
@@ -341,7 +336,7 @@ class JanewayString {
 	 * @see http://ca.php.net/manual/en/function.regexp_match_all.php
 	 */
 	function regexp_match_all($pattern, $subject, &$matches) {
-		if (PCRE_UTF8 && !PKPString::utf8_compliant($subject)) $subject = PKPString::utf8_bad_strip($subject);
+		if (PCRE_UTF8 && !JanewayString::utf8_compliant($subject)) $subject = JanewayString::utf8_bad_strip($subject);
 		return preg_match_all($pattern . PCRE_UTF8, $subject, $matches);
 	}
 
@@ -349,7 +344,7 @@ class JanewayString {
 	 * @see http://ca.php.net/manual/en/function.regexp_replace.php
 	 */
 	function regexp_replace($pattern, $replacement, $subject, $limit = -1) {
-		if (PCRE_UTF8 && !PKPString::utf8_compliant($subject)) $subject = PKPString::utf8_bad_strip($subject);
+		if (PCRE_UTF8 && !JanewayString::utf8_compliant($subject)) $subject = JanewayString::utf8_bad_strip($subject);
 		return preg_replace($pattern . PCRE_UTF8, $replacement, $subject, $limit);
 	}
 
@@ -357,7 +352,7 @@ class JanewayString {
 	 * @see http://ca.php.net/manual/en/function.regexp_replace_callback.php
 	 */
 	function regexp_replace_callback($pattern, $callback, $subject, $limit = -1) {
-		if (PCRE_UTF8 && !PKPString::utf8_compliant($subject)) $subject = PKPString::utf8_bad_strip($subject);
+		if (PCRE_UTF8 && !JanewayString::utf8_compliant($subject)) $subject = JanewayString::utf8_bad_strip($subject);
 		return preg_replace_callback($pattern . PCRE_UTF8, $callback, $subject, $limit);
 	}
 
@@ -365,7 +360,7 @@ class JanewayString {
 	 * @see http://ca.php.net/manual/en/function.regexp_split.php
 	 */
 	function regexp_split($pattern, $subject, $limit = -1) {
-		if (PCRE_UTF8 && !PKPString::utf8_compliant($subject)) $subject = PKPString::utf8_bad_strip($subject);
+		if (PCRE_UTF8 && !JanewayString::utf8_compliant($subject)) $subject = JanewayString::utf8_bad_strip($subject);
 		return preg_split($pattern . PCRE_UTF8, $subject, $limit);
 	}
 
@@ -525,11 +520,11 @@ class JanewayString {
 	 * @return string
 	 */
 	function html2text($html) {
-		$html = PKPString::regexp_replace('/<[\/]?p>/', "\n", $html);
-		$html = PKPString::regexp_replace('/<li>/', '&bull; ', $html);
-		$html = PKPString::regexp_replace('/<\/li>/', "\n", $html);
-		$html = PKPString::regexp_replace('/<br[ ]?[\/]?>/', "\n", $html);
-		$html = PKPString::html2utf(strip_tags($html));
+		$html = JanewayString::regexp_replace('/<[\/]?p>/', "\n", $html);
+		$html = JanewayString::regexp_replace('/<li>/', '&bull; ', $html);
+		$html = JanewayString::regexp_replace('/<\/li>/', "\n", $html);
+		$html = JanewayString::regexp_replace('/<br[ ]?[\/]?>/', "\n", $html);
+		$html = JanewayString::html2utf(strip_tags($html));
 		return $html;
 	}
 
@@ -608,7 +603,7 @@ class JanewayString {
 	function utf8_normalize($str) {
 		import('lib.pkp.classes.core.Transcoder');
 
-		if (PKPString::hasMBString()) {
+		if (JanewayString::hasMBString()) {
 			// NB: CP-1252 often segfaults; we've left it out here but it will detect as 'ISO-8859-1'
 			$mb_encoding_order = 'UTF-8, UTF-7, ASCII, ISO-8859-1, EUC-JP, SJIS, eucJP-win, SJIS-win, JIS, ISO-2022-JP';
 
@@ -716,11 +711,11 @@ class JanewayString {
 	 */
 	function html2utf($str) {
 		// convert named entities to numeric entities
-		$str = strtr($str, PKPString::getHTMLEntities());
+		$str = strtr($str, JanewayString::getHTMLEntities());
 
 		// use PCRE-aware replace function to replace numeric entities
-		$str = PKPString::regexp_replace('~&#x([0-9a-f]+);~ei', 'PKPString::code2utf(hexdec("\\1"))', $str);
-		$str = PKPString::regexp_replace('~&#([0-9]+);~e', 'PKPString::code2utf(\\1)', $str);
+		$str = JanewayString::regexp_replace('~&#x([0-9a-f]+);~ei', 'JanewayString::code2utf(hexdec("\\1"))', $str);
+		$str = JanewayString::regexp_replace('~&#([0-9]+);~e', 'JanewayString::code2utf(\\1)', $str);
 
 		return $str;
 	}
@@ -883,10 +878,10 @@ class JanewayString {
 
 		$words = explode(' ', $title);
 		foreach ($words as $key => $word) {
-			if ($key == 0 or !in_array(PKPString::strtolower($word), $smallWords)) {
-				$words[$key] = ucfirst(PKPString::strtolower($word));
+			if ($key == 0 or !in_array(JanewayString::strtolower($word), $smallWords)) {
+				$words[$key] = ucfirst(JanewayString::strtolower($word));
 			} else {
-				$words[$key] = PKPString::strtolower($word);
+				$words[$key] = JanewayString::strtolower($word);
 			}
 		}
 
@@ -953,7 +948,7 @@ class JanewayString {
 
 		// Insert hyphens between words and return the string in lowercase
 		$words = array();
-		PKPString::regexp_match_all('/[A-Z][a-z0-9]*/', $string, $words);
+		JanewayString::regexp_match_all('/[A-Z][a-z0-9]*/', $string, $words);
 		assert(isset($words[0]) && !empty($words[0]) && strlen(implode('', $words[0])) == strlen($string));
 		return strtolower(implode('-', $words[0]));
 	}
@@ -986,7 +981,7 @@ class JanewayString {
 		// Split strings into character arrays (multi-byte compatible).
 		foreach(array('originalStringCharacters' => $originalString, 'editedStringCharacters' => $editedString) as $characterArrayName => $string) {
 			${$characterArrayName} = array();
-			PKPString::regexp_match_all('/./', $string, ${$characterArrayName});
+			JanewayString::regexp_match_all('/./', $string, ${$characterArrayName});
 			if (isset(${$characterArrayName}[0])) {
 				${$characterArrayName} = ${$characterArrayName}[0];
 			}
@@ -1044,7 +1039,7 @@ class JanewayString {
 						// This is a continuation of an existing common
 						// substring...
 						$newSubstring = $substringIndex[$previousPosition].$comparedCharacter;
-						$newSubstringLength = PKPString::strlen($newSubstring);
+						$newSubstringLength = JanewayString::strlen($newSubstring);
 
 						// Move the substring in the substring index.
 						$substringIndex[$currentPosition] = $newSubstring;
@@ -1092,15 +1087,15 @@ class JanewayString {
 
 		// Prepend the diff of the substrings before the common substring
 		// to the result diff (by recursion).
-		$precedingSubstringOriginal = PKPString::substr($originalString, 0, $largestSubstringEndOriginal-$largestSubstringLength+1);
-		$precedingSubstringEdited = PKPString::substr($editedString, 0, $largestSubstringEndEdited-$largestSubstringLength+1);
-		$diffResult = array_merge(PKPString::diff($precedingSubstringOriginal, $precedingSubstringEdited), $diffResult);
+		$precedingSubstringOriginal = JanewayString::substr($originalString, 0, $largestSubstringEndOriginal-$largestSubstringLength+1);
+		$precedingSubstringEdited = JanewayString::substr($editedString, 0, $largestSubstringEndEdited-$largestSubstringLength+1);
+		$diffResult = array_merge(JanewayString::diff($precedingSubstringOriginal, $precedingSubstringEdited), $diffResult);
 
 		// Append the diff of the substrings after thr common substring
 		// to the result diff (by recursion).
-		$succeedingSubstringOriginal = PKPString::substr($originalString, $largestSubstringEndOriginal+1);
-		$succeedingSubstringEdited = PKPString::substr($editedString, $largestSubstringEndEdited+1);
-		$diffResult = array_merge($diffResult, PKPString::diff($succeedingSubstringOriginal, $succeedingSubstringEdited));
+		$succeedingSubstringOriginal = JanewayString::substr($originalString, $largestSubstringEndOriginal+1);
+		$succeedingSubstringEdited = JanewayString::substr($editedString, $largestSubstringEndEdited+1);
+		$diffResult = array_merge($diffResult, JanewayString::diff($succeedingSubstringOriginal, $succeedingSubstringEdited));
 
 		// Return the array representing the diff.
 		return $diffResult;
