@@ -525,7 +525,7 @@ class JanewayHandler extends Handler {
 				'volume' => $issue->getVolume(),
 				'number' => $issue->getNumber(),
 				'year' => $issue->getYear(),
-				'published' => $issue->getDatePublished(),
+				'date_published' => $issue->getDatePublished(),
 				'description' => $issue->getIssueDescription(),
 				'cover' => $request->getBaseUrl() . '/public/journals/'. $journal->getId() . '/' . $issue->getIssueFileName(),
 			);
