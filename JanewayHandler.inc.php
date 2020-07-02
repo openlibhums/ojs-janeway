@@ -1,4 +1,5 @@
 <?php
+error_reporting(E_ERROR);
 
 /**
  *
@@ -11,6 +12,7 @@
 
 import('classes.handler.Handler');
 require_once('JanewayDAO.inc.php');
+require_once('JanewayString.inc.php');
 
 function redirect($url) {
 	header("Location: ". $url); // http://www.example.com/"); /* Redirect browser */
@@ -25,7 +27,7 @@ function raise404($msg='404 Not Found') {
 }
 
 function clean_string($v) {
-	// strips non-alpha-numeric characters from $v	
+	// strips non-alpha-numeric characters from $v
 	return preg_replace('/[^\-a-zA-Z0-9]+/', '',$v);
 }
 
@@ -43,16 +45,16 @@ class JanewayHandler extends Handler {
 		parent::Handler();
 		$this->dao = new JanewayDAO();
 	}
-	
+
 	/* sets up the template to be rendered */
 	function display($fname, $page_context=array()) {
 		// setup template
 		Locale::requireComponents(LOCALE_COMPONENT_OJS_MANAGER, LOCALE_COMPONENT_PKP_MANAGER);
 		parent::setupTemplate();
-		
+
 		// setup template manager
 		$templateMgr =& TemplateManager::getManager();
-		
+
 		// default page values
 		$context = array(
 			"page_title" => "Janeway"
@@ -113,17 +115,17 @@ class JanewayHandler extends Handler {
 			$reviewFormElementDao =& DAORegistry::getDAO('ReviewFormElementDAO');
 			$reviewFormElements =& $reviewFormElementDao->getReviewFormElements($reviewFormId);
 			foreach ($reviewFormElements as $reviewFormElement) {
-				$body .= PKPString::html2text($reviewFormElement->getLocalizedQuestion()) . ": \n";
+				$body .= JanewayString::html2text($reviewFormElement->getLocalizedQuestion()) . ": \n";
 				$reviewFormResponse = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElement->getId());
 				if ($reviewFormResponse) {
 					$possibleResponses = $reviewFormElement->getLocalizedPossibleResponses();
 					if (in_array($reviewFormElement->getElementType(), $reviewFormElement->getMultipleResponsesElementTypes())) {
 						if ($reviewFormElement->getElementType() == REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES) {
 							foreach ($reviewFormResponse->getValue() as $value) {
-								$body .= "\t" . PKPString::html2text($possibleResponses[$value-1]['content']) . "\n";
+								$body .= "\t" . JanewayString::html2text($possibleResponses[$value-1]['content']) . "\n";
 							}
 						} else {
-							$body .= "\t" . SPKPString::html2text($possibleResponses[$reviewFormResponse->getValue()-1]['content']) . "\n";
+							$body .= "\t" . JanewayString::html2text($possibleResponses[$reviewFormResponse->getValue()-1]['content']) . "\n";
 						}
 						$body .= "\n";
 					} else {
@@ -145,18 +147,30 @@ class JanewayHandler extends Handler {
 	function utf8ize($d) {
 
 		if (is_array($d)) {
-			foreach ($d as $k => $v) 
+			foreach ($d as $k => $v)
 				$d[$k] = $this->utf8ize($v);
 		} elseif (is_object($d)) {
-			foreach ($d as $k => $v) 
+			foreach ($d as $k => $v)
 				$d->$k = $this->utf8ize($v);
-		} else {
-			if(mb_detect_encoding($d) != "UTF-8") {
-				$d = utf8_encode($d); 
-			}
+		} elseif (is_string($d)){
+			$encoding =  mb_detect_encoding($d);
+			$d = iconv($encoding, 'UTF-8', $d);
 		}
 
 		return $d;
+	}
+
+	function json_response($data) {
+		header('Content-Type: application/json');
+		$cleaned = $this->utf8ize($data);
+		$json_data = json_encode($cleaned, JSON_PRETTY_PRINT);
+		if ($json_data === false) {
+			$err = json_last_error();
+			header("HTTP/1.1 500 Internal Server Error");
+			echo $err;
+		} else {
+			echo $json_data;
+		}
 	}
 
 	function build_download_url($journal, $submission_id, $file_id) {
@@ -165,13 +179,13 @@ class JanewayHandler extends Handler {
 		} else {
 			return '';
 		}
-		
+
 	}
 
 	//
 	// views
 	//
-	
+
 	/* handles requests to:
 		/janeway/
 		/janeway/index/
@@ -196,7 +210,7 @@ class JanewayHandler extends Handler {
 		} else {
 			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0);
 		}
-		
+
 		$submissions_array = array();
 
 		foreach ($submissions->toArray() as $submission) {
@@ -287,7 +301,7 @@ class JanewayHandler extends Handler {
 					if ($review->getReviewerFileId()) {
 						$review_array['review_file_url'] = $journal->getUrl() . '/editor/downloadFile/' . $submission->getId() . '/' . $review->getReviewerFileId();
 					}
-					
+
 
 					array_push($reviews_array, $review_array);
 				}
@@ -368,7 +382,7 @@ class JanewayHandler extends Handler {
 				if ($copyeditor) {
 					$proofreader_proofing_array['email'] = $copyeditor->getEmail();
 				}
-				
+
 				$proofing_array['proofreader'] = $proofreader_proofing_array;
 
 				$layout_proof = $submission->getSignoff('SIGNOFF_PROOFREADING_LAYOUT');
@@ -404,7 +418,7 @@ class JanewayHandler extends Handler {
 			$layout_signoff = $submission->getSignoff('SIGNOFF_LAYOUT');
 			$layout_file = $submission->getFileBySignoffType('SIGNOFF_LAYOUT');
 			$layout_editor = $submission->getUserBySignoffType('SIGNOFF_LAYOUT');
-			
+
 			$sectionEditorSubmission =& $sectionEditorSubmissionDao->getSectionEditorSubmission($submission->getId());
 			$galleys =& $sectionEditorSubmission->getGalleys();
 
@@ -452,8 +466,7 @@ class JanewayHandler extends Handler {
 		}
 
 		$out = array_values($submissions_array);
-		header('Content-Type: application/json');
-		echo json_encode($submissions_array);
+		$this->json_response($submissions_array);
 	}
 
 	function users($args, &$request) {
@@ -470,7 +483,7 @@ class JanewayHandler extends Handler {
 			$user_array = array(
 				'id' => (int)$user['user_id'],
 				'salutation' => $user['salutation'],
-				'first_name' => $user['first_name'], 
+				'first_name' => $user['first_name'],
 				'middle_name' => $user['middle_name'],
 				'last_name' => $user['last_name'],
 				'email' => $user['email'],
@@ -491,8 +504,7 @@ class JanewayHandler extends Handler {
 			array_push($users_array, $user_array);
 		}
 
-		header('Content-Type: application/json');
-		echo json_encode($users_array);
+		$this->json_response($users_array);
 	}
 
 
