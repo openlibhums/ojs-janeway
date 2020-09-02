@@ -177,7 +177,7 @@ class JanewayHandler extends Handler {
 		if ($journal && $submission_id && $file_id) {
 			return $journal->getUrl() . '/editor/downloadFile/' . $submission_id . '/' . $file_id;
 		} else {
-			return None;
+			return '';
 		}
 
 	}
@@ -229,7 +229,9 @@ class JanewayHandler extends Handler {
 			$submission_array['date_submitted'] = $submission->getDateSubmitted();
 			$submission_array['keywords'] = array_map('trim', explode(',', str_replace(';', ',', $submission->getLocalizedSubject())));
 			$submission_array['doi'] = $submission->getStoredPubId('doi');
-			$submission_array['license'] = $submission->getLicenseURL();
+			try {
+				$submission_array['license'] = $submission->getLicenseURL();
+			} catch (Exception $e){}
 
 			// Get submission file url
 			$submission_array['manuscript_file_url'] = $journal->getUrl() . '/editor/downloadFile/' . $submission->getId() . '/' . $submission->getSubmissionFileId();
