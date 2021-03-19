@@ -294,6 +294,7 @@ class JanewayHandler extends Handler {
 			foreach ($authors as $author) {
 				$author_array = array(
 					'first_name' => $author->getFirstName(),
+					'middle_name' => $author->getMiddleName(),
 					'last_name' => $author->getLastName(),
 					'email' => $author->getEmail(),
 					'bio' => $author->getLocalizedBiography(),
@@ -358,6 +359,7 @@ class JanewayHandler extends Handler {
 					$user_dao = DAORegistry::getDAO('UserDAO');
 					$user = $user_dao->getUser($review->getReviewerId());
 					$review_array['first_name'] = $user->getFirstName();
+					$review_array['middle_name'] = $user->getMiddleName();
 					$review_array['last_name'] = $user->getLastName();
 					$review_array['email'] = $user->getEmail();
 
