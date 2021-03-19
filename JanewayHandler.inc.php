@@ -379,6 +379,36 @@ class JanewayHandler extends Handler {
 			$copyedit_dates = $submission->getSignoff('SIGNOFF_COPYEDITING_INITIAL');
 			$copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_INITIAL');
 			$copyediting_array = array();
+			if ($copyedit_file) {
+				$copyediting_array['initial_file'] = array(
+					'url' => $this->build_download_url($journal, $submission->getId(), $copyedit_file->getFileId()),
+					'date_uploaded' => $copyedit_file->getDateUploaded(),
+					'date_modified' => $copyedit_file->getDateModified(),
+					'mime_type' => $copyedit_file->getFileType(),
+					'file_name' => $copyedit_file->getFileName(),
+				);
+			}
+			$author_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_AUTHOR');
+			if ($author_copyedit_file) {
+				$copyediting_array['final_file'] = array(
+					'url' => $this->build_download_url($journal, $submission->getId(), $author_copyedit_file->getFileId()),
+					'date_uploaded' => $author_copyedit_file->getDateUploaded(),
+					'date_modified' => $author_copyedit_file->getDateModified(),
+					'mime_type' => $author_copyedit_file->getFileType(),
+					'file_name' => $author_copyedit_file->getFileName(),
+				);
+			}
+			$final_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_FINAL');
+			$final_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_FINAL');
+			if ($final_copyedit_file) {
+				$copyediting_array['final_file'] = array(
+					'url' => $this->build_download_url($journal, $submission->getId(), $final_copyedit_file->getFileId()),
+					'date_uploaded' => $final_copyedit_file->getDateUploaded(),
+					'date_modified' => $final_copyedit_file->getDateModified(),
+					'mime_type' => $final_copyedit_file->getFileType(),
+					'file_name' => $final_copyedit_file->getFileName(),
+				);
+			}
 
 			if ($copyeditor) {
 				$initial_copyeditor_array = array(
