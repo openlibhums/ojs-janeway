@@ -310,6 +310,24 @@ class JanewayHandler extends Handler {
 				}
 			}
 			$submission_array['authors'] = $authors_array;
+			// Editors
+			$editors_assignments = $submission->getEditAssignments();
+			$editors_array = [];
+			
+			foreach($editors_assignments as $ed){
+				array_push(
+					$editors_array,
+					array(
+						'email' => $ed->getEditorEmail(),
+						'role' => $ed->isEditor ? 'editor' : 'section-editor',
+						'notified' => $ed->getDateNotified(),
+						'underway' => $ed->getDateUnderway(),
+					)
+
+				);
+				
+			}
+			$submission_array['editors'] = $editors_array;
 
 			// Reviews
 			$reviewAssignments =& $submission->getReviewAssignments();
