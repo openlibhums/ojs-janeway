@@ -450,6 +450,8 @@ class JanewayHandler extends Handler {
 
 				$copyediting_array['final'] = $final_copyedit_array;
 
+			}
+			if ($copyediting_array) {
 				$submission_array['copyediting'] = $copyediting_array;
 			}
 
