@@ -524,6 +524,15 @@ class JanewayHandler extends Handler {
 				'underway' => $layout_signoff->getDateUnderway(),
 				'complete' => $layout_signoff->getDateCompleted(),
 			);
+			if ($layout_file) {
+				$layout_array['layout_file'] = array(
+					'url' => $this->build_download_url($journal, $submission->getId(), $layout_file->getFileId()),
+					'date_uploaded' => $layout_file->getDateUploaded(),
+					'date_modified' => $layout_file->getDateModified(),
+					'mime_type' => $layout_file->getFileType(),
+					'file_name' => $layout_file->getFileName(),
+				);
+			}
 
 			if ($layout_editor) {
 				$layout_array['email'] = $layout_editor->getEmail();
