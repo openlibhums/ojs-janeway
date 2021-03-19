@@ -217,6 +217,19 @@ class JanewayHandler extends Handler {
 
 	}
 
+	function encode_file_meta($journal, $submission, $file) {
+		if ($file) {
+			return array(
+				'url' => $this->build_download_url($journal, $submission->getId(), $file->getFileId()),
+				'date_uploaded' => $file->getDateUploaded(),
+				'date_modified' => $file->getDateModified(),
+				'mime_type' => $file->getFileType(),
+				'file_name' => $file->getFileName(),
+			);
+		}
+
+	}
+
 	//
 	// views
 	//
@@ -272,18 +285,15 @@ class JanewayHandler extends Handler {
 			}
 
 			// Get submission file url
-			$submission_array['manuscript_file_url'] = $journal->getUrl() . '/editor/downloadFile/' . $submission->getId() . '/' . $submission->getSubmissionFileId();
-			$submission_array['review_file_url'] = $journal->getUrl() . '/editor/downloadFile/' . $submission->getId() . '/' . $submission->getReviewFileId();
+			$submission_array['manuscript_file'] = $this->encode_file_meta($journal, $submission, $submission->getSubmissionFile());
+			$submission_array['review_file'] = $this->encode_file_meta($journal, $submission, $submission->getReviewFile());
 
 			// Supp Files
 			$suppDAO =& DAORegistry::getDAO('SuppFileDAO');
 			$supp_files = $suppDAO->getSuppFilesByArticle($submission->getId());
 			$supp_files_array = array();
 			foreach ($supp_files as $supp_file) {
-				$supp_file_array = array(
-					'url' => $journal->getUrl() . '/article/downloadSuppFile/' . $submission->getId() . '/' . $supp_file->getBestSuppFileId($journal),
-					'title' => $supp_file->getSuppFileTitle(),
-				);
+				$supp_file_array = $this->encode_file_meta($journal, $submission, $supp_file);
 				array_push($supp_files_array, $supp_file_array);
 			}
 			$submission_array['supp_files'] = $supp_files_array;
@@ -379,36 +389,12 @@ class JanewayHandler extends Handler {
 			$copyedit_dates = $submission->getSignoff('SIGNOFF_COPYEDITING_INITIAL');
 			$copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_INITIAL');
 			$copyediting_array = array();
-			if ($copyedit_file) {
-				$copyediting_array['initial_file'] = array(
-					'url' => $this->build_download_url($journal, $submission->getId(), $copyedit_file->getFileId()),
-					'date_uploaded' => $copyedit_file->getDateUploaded(),
-					'date_modified' => $copyedit_file->getDateModified(),
-					'mime_type' => $copyedit_file->getFileType(),
-					'file_name' => $copyedit_file->getFileName(),
-				);
-			}
+			$copyediting_array["initial_file"] = $this->encode_file_meta($journal, $submission, $copyedit_file);
 			$author_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_AUTHOR');
-			if ($author_copyedit_file) {
-				$copyediting_array['final_file'] = array(
-					'url' => $this->build_download_url($journal, $submission->getId(), $author_copyedit_file->getFileId()),
-					'date_uploaded' => $author_copyedit_file->getDateUploaded(),
-					'date_modified' => $author_copyedit_file->getDateModified(),
-					'mime_type' => $author_copyedit_file->getFileType(),
-					'file_name' => $author_copyedit_file->getFileName(),
-				);
-			}
+			$copyediting_array['author_file'] = $this->encode_file_meta($journal, $submission, $author_copyedit_file);
 			$final_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_FINAL');
 			$final_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_FINAL');
-			if ($final_copyedit_file) {
-				$copyediting_array['final_file'] = array(
-					'url' => $this->build_download_url($journal, $submission->getId(), $final_copyedit_file->getFileId()),
-					'date_uploaded' => $final_copyedit_file->getDateUploaded(),
-					'date_modified' => $final_copyedit_file->getDateModified(),
-					'mime_type' => $final_copyedit_file->getFileType(),
-					'file_name' => $final_copyedit_file->getFileName(),
-				);
-			}
+			$copyediting_array['final_file'] = $this->encode_file_meta($journal, $submission, $final_copyedit_file);
 
 			if ($copyeditor) {
 				$initial_copyeditor_array = array(
@@ -420,7 +406,7 @@ class JanewayHandler extends Handler {
 					'complete' => $copyedit_dates->getdateCompleted(),
 				);
 				if ($copyedit_file) {
-					$initial_copyeditor_array['file'] = $this->build_download_url($journal, $submission->getId(), $copyedit_file->getFileId());
+					$initial_copyeditor_array['file'] = $this->encode_file_meta($journal, $submission, $copyedit_file);
 				}
 				$copyediting_array['initial'] = $initial_copyeditor_array;
 
@@ -433,19 +419,17 @@ class JanewayHandler extends Handler {
 				);
 
 				if ($author_copyedit_file) {
-					$author_copyedit_array['file'] = $this->build_download_url($journal, $submission->getId(), $author_copyedit_file->getFileId());
+					$author_copyedit_array['file'] = $this->encode_file_meta($journal, $submission, $author_copyedit_file);
 				}
 				$copyediting_array['author'] = $author_copyedit_array;
 
-				$final_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_FINAL');
-				$final_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_FINAL');
 				$final_copyedit_array = array(
 					'notified' => $final_copyedit->getdateNotified(),
 					'underway' => $final_copyedit->getdateUnderway(),
 					'complete' => $final_copyedit->getdateCompleted(),
 				);
 				if ($final_copyedit_file) {
-					$final_copyedit_array['file'] = $this->build_download_url($journal, $submission->getId(), $final_copyedit_file->getFileId());
+					$final_copyedit_array['file'] = $this->encode_file_meta($journal, $submission, $final_copyedit_file);
 				}
 
 				$copyediting_array['final'] = $final_copyedit_array;
@@ -524,15 +508,7 @@ class JanewayHandler extends Handler {
 				'underway' => $layout_signoff->getDateUnderway(),
 				'complete' => $layout_signoff->getDateCompleted(),
 			);
-			if ($layout_file) {
-				$layout_array['layout_file'] = array(
-					'url' => $this->build_download_url($journal, $submission->getId(), $layout_file->getFileId()),
-					'date_uploaded' => $layout_file->getDateUploaded(),
-					'date_modified' => $layout_file->getDateModified(),
-					'mime_type' => $layout_file->getFileType(),
-					'file_name' => $layout_file->getFileName(),
-				);
-			}
+			$layout_array['layout_file'] = $this->encode_file_meta($journal, $submission, $layout_file);
 
 			if ($layout_editor) {
 				$layout_array['email'] = $layout_editor->getEmail();
@@ -543,7 +519,7 @@ class JanewayHandler extends Handler {
 			foreach ($galleys as $galley) {
 				$galley_array = array(
 					'label' => $galley->getGalleyLabel(),
-					'file' => $this->build_download_url($journal, $submission->getId(), $galley->getFileId()),
+					'file' => $this->encode_file_meta($journal, $submission, $galley),
 				);
 				array_push($galleys_array, $galley_array);
 			}
