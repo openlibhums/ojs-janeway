@@ -341,6 +341,7 @@ class JanewayHandler extends Handler {
 					$review_object = $review;
 					$review_array = array();
 
+					$review_array['round'] = (int)$review_data['round'];
 					$review_array['date_requested'] = $review_data['dateAssigned'];
 					$review_array['date_due'] = $review_data['dateDue'];
 					$review_array['date_confirmed'] = $review->getDateConfirmed();
