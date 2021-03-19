@@ -235,7 +235,9 @@ class JanewayHandler extends Handler {
 		$editorSubmissionDao =& DAORegistry::getDAO('EditorSubmissionDAO');
 		$sectionEditorSubmissionDao =& DAORegistry::getDAO('SectionEditorSubmissionDAO');
 
-		if ($request_type == 'in_review') {
+		if ($request_type == 'unassigned') {
+			$submissions =& $editorSubmissionDao->getEditorSubmissionsUnassigned($journal->getId(), 0, 0);
+		} elseif ($request_type == 'in_review') {
 			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0);
 		} elseif ($request_type == 'in_editing') {
 			$submissions =& $editorSubmissionDao->getEditorSubmissionsInEditing($journal->getId(), 0, 0);
@@ -264,8 +266,9 @@ class JanewayHandler extends Handler {
 			$submission_array['date_submitted'] = $submission->getDateSubmitted();
 			$submission_array['keywords'] = array_map('trim', explode(',', str_replace(';', ',', $submission->getLocalizedSubject())));
 			$submission_array['doi'] = $submission->getStoredPubId('doi');
+			$submission_array['doi'] = $submission->getStoredPubId('doi');
 			if (method_exists($submission, "getLicenseUrl")){
-				$submission_array['drafts'] = $this->getDraftDecisions($review, (int)$submission->getId());
+				$submission_array['license'] = $submission->getLicenseURL();
 			}
 
 			// Get submission file url
