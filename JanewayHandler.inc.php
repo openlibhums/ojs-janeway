@@ -160,6 +160,41 @@ class JanewayHandler extends Handler {
 		return $d;
 	}
 
+	function getDraftDecisions($sectionEditorSubmissionDAO, $articleId) {
+		$rows =& $sectionEditorSubmissionDAO->retrieve(
+			'SELECT 
+				dd.key_val as draft_key,
+				dd.decision as recommendation,
+				se.email as section_editor, 
+				ed.email as editor,
+				dd.status as status,
+				dd.note as note,
+				dd.attatchment as attachment,
+				dd.body as body,
+				dd.subject as subject
+			 FROM draft_decisions dd
+			 JOIN users se ON dd.junior_editor_id = se.user_id
+			 JOIN users ed ON dd.senior_editor_id = ed.user_id
+			 WHERE article_id = ?
+			 ORDER BY dd.id',
+				array($articleId)
+		);
+		$results = [];
+		foreach($rows as $row){
+			$results[$row["draft_key"]] = [];
+			$results[$row["draft_key"]]["recommendation"]= $this->utf8ize($row["recommendation"]);
+			$results[$row["draft_key"]]["section_editor"]= $row["section_editor"];
+			$results[$row["draft_key"]]["editor"]= $row["editor"];
+			$results[$row["draft_key"]]["status"]= $this->utf8ize($row["status"]);
+			$results[$row["draft_key"]]["note"]= $this->utf8ize($row["note"]);
+			$results[$row["draft_key"]]["body"]= $this->utf8ize($row["body"]);
+			$results[$row["draft_key"]]["subject"]= $this->utf8ize($row["subject"]);
+			$results[$row["draft_key"]]["attatchment"]= $row["attatchment"];
+		}
+		return $results;
+
+	}
+
 	function json_response($data) {
 		header('Content-Type: application/json');
 		$cleaned = $this->utf8ize($data);
@@ -229,8 +264,8 @@ class JanewayHandler extends Handler {
 			$submission_array['date_submitted'] = $submission->getDateSubmitted();
 			$submission_array['keywords'] = array_map('trim', explode(',', str_replace(';', ',', $submission->getLocalizedSubject())));
 			$submission_array['doi'] = $submission->getStoredPubId('doi');
-			if (method_exists($submission, "getLicenseURL")){
-				$submission_array['license'] = $submission->getLicenseURL();
+			if (method_exists($submission, "getLicenseUrl")){
+				$submission_array['drafts'] = $this->getDraftDecisions($review, (int)$submission->getId());
 			}
 
 			// Get submission file url
@@ -277,6 +312,7 @@ class JanewayHandler extends Handler {
 			$reviewAssignments =& $submission->getReviewAssignments();
 			$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
 			$reviews_array = array();
+			$sectionEditorSubmissionDAO =& DAORegistry::getDAO('SectionEditorSubmissionDAO');
 
 			foreach ($reviewAssignments as $reviews) {
 				foreach ($reviews as $review) {
@@ -292,6 +328,9 @@ class JanewayHandler extends Handler {
 					$review_array['recommendation'] = $review->getRecommendation();
 					$review_array['date_complete'] = $review->getDateCompleted();
 					$review_array['comments'] = $this->get_reviewer_comments($review->getReviewId(), $submission->getId());
+					if (method_exists($sectionEditorSubmissionDao, "getArticleDrafts")){
+						$submission_array['draft_decisions'] = $this->getDraftDecisions($sectionEditorSubmissionDAO, (int)$submission->getId());
+					}
 
 
 					$user_dao = DAORegistry::getDAO('UserDAO');
