@@ -160,6 +160,41 @@ class JanewayHandler extends Handler {
 		return $d;
 	}
 
+	function getDraftDecisions($sectionEditorSubmissionDAO, $articleId) {
+		$rows =& $sectionEditorSubmissionDAO->retrieve(
+			'SELECT 
+				dd.key_val as draft_key,
+				dd.decision as recommendation,
+				se.email as section_editor, 
+				ed.email as editor,
+				dd.status as status,
+				dd.note as note,
+				dd.attatchment as attachment,
+				dd.body as body,
+				dd.subject as subject
+			 FROM draft_decisions dd
+			 JOIN users se ON dd.junior_editor_id = se.user_id
+			 JOIN users ed ON dd.senior_editor_id = ed.user_id
+			 WHERE article_id = ?
+			 ORDER BY dd.id',
+				array($articleId)
+		);
+		$results = [];
+		foreach($rows as $row){
+			$results[$row["draft_key"]] = [];
+			$results[$row["draft_key"]]["recommendation"]= $this->utf8ize($row["recommendation"]);
+			$results[$row["draft_key"]]["section_editor"]= $row["section_editor"];
+			$results[$row["draft_key"]]["editor"]= $row["editor"];
+			$results[$row["draft_key"]]["status"]= $this->utf8ize($row["status"]);
+			$results[$row["draft_key"]]["note"]= $this->utf8ize($row["note"]);
+			$results[$row["draft_key"]]["body"]= $this->utf8ize($row["body"]);
+			$results[$row["draft_key"]]["subject"]= $this->utf8ize($row["subject"]);
+			$results[$row["draft_key"]]["attatchment"]= $row["attatchment"];
+		}
+		return $results;
+
+	}
+
 	function json_response($data) {
 		header('Content-Type: application/json');
 		$cleaned = $this->utf8ize($data);
@@ -182,6 +217,19 @@ class JanewayHandler extends Handler {
 
 	}
 
+	function encode_file_meta($journal, $submission, $file) {
+		if ($file) {
+			return array(
+				'url' => $this->build_download_url($journal, $submission->getId(), $file->getFileId()),
+				'date_uploaded' => $file->getDateUploaded(),
+				'date_modified' => $file->getDateModified(),
+				'mime_type' => $file->getFileType(),
+				'file_name' => $file->getFileName(),
+			);
+		}
+
+	}
+
 	//
 	// views
 	//
@@ -200,7 +248,9 @@ class JanewayHandler extends Handler {
 		$editorSubmissionDao =& DAORegistry::getDAO('EditorSubmissionDAO');
 		$sectionEditorSubmissionDao =& DAORegistry::getDAO('SectionEditorSubmissionDAO');
 
-		if ($request_type == 'in_review') {
+		if ($request_type == 'unassigned') {
+			$submissions =& $editorSubmissionDao->getEditorSubmissionsUnassigned($journal->getId(), 0, 0);
+		} elseif ($request_type == 'in_review') {
 			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0);
 		} elseif ($request_type == 'in_editing') {
 			$submissions =& $editorSubmissionDao->getEditorSubmissionsInEditing($journal->getId(), 0, 0);
@@ -229,23 +279,21 @@ class JanewayHandler extends Handler {
 			$submission_array['date_submitted'] = $submission->getDateSubmitted();
 			$submission_array['keywords'] = array_map('trim', explode(',', str_replace(';', ',', $submission->getLocalizedSubject())));
 			$submission_array['doi'] = $submission->getStoredPubId('doi');
-			if (method_exists($submission, "getLicenseURL")){
+			$submission_array['doi'] = $submission->getStoredPubId('doi');
+			if (method_exists($submission, "getLicenseUrl")){
 				$submission_array['license'] = $submission->getLicenseURL();
 			}
 
 			// Get submission file url
-			$submission_array['manuscript_file_url'] = $journal->getUrl() . '/editor/downloadFile/' . $submission->getId() . '/' . $submission->getSubmissionFileId();
-			$submission_array['review_file_url'] = $journal->getUrl() . '/editor/downloadFile/' . $submission->getId() . '/' . $submission->getReviewFileId();
+			$submission_array['manuscript_file'] = $this->encode_file_meta($journal, $submission, $submission->getSubmissionFile());
+			$submission_array['review_file'] = $this->encode_file_meta($journal, $submission, $submission->getReviewFile());
 
 			// Supp Files
 			$suppDAO =& DAORegistry::getDAO('SuppFileDAO');
 			$supp_files = $suppDAO->getSuppFilesByArticle($submission->getId());
 			$supp_files_array = array();
 			foreach ($supp_files as $supp_file) {
-				$supp_file_array = array(
-					'url' => $journal->getUrl() . '/article/downloadSuppFile/' . $submission->getId() . '/' . $supp_file->getBestSuppFileId($journal),
-					'title' => $supp_file->getSuppFileTitle(),
-				);
+				$supp_file_array = $this->encode_file_meta($journal, $submission, $supp_file);
 				array_push($supp_files_array, $supp_file_array);
 			}
 			$submission_array['supp_files'] = $supp_files_array;
@@ -256,6 +304,7 @@ class JanewayHandler extends Handler {
 			foreach ($authors as $author) {
 				$author_array = array(
 					'first_name' => $author->getFirstName(),
+					'middle_name' => $author->getMiddleName(),
 					'last_name' => $author->getLastName(),
 					'email' => $author->getEmail(),
 					'bio' => $author->getLocalizedBiography(),
@@ -272,11 +321,30 @@ class JanewayHandler extends Handler {
 				}
 			}
 			$submission_array['authors'] = $authors_array;
+			// Editors
+			$editors_assignments = $submission->getEditAssignments();
+			$editors_array = [];
+			
+			foreach($editors_assignments as $ed){
+				array_push(
+					$editors_array,
+					array(
+						'email' => $ed->getEditorEmail(),
+						'role' => $ed->isEditor ? 'editor' : 'section-editor',
+						'notified' => $ed->getDateNotified(),
+						'underway' => $ed->getDateUnderway(),
+					)
+
+				);
+				
+			}
+			$submission_array['editors'] = $editors_array;
 
 			// Reviews
 			$reviewAssignments =& $submission->getReviewAssignments();
 			$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
 			$reviews_array = array();
+			$sectionEditorSubmissionDAO =& DAORegistry::getDAO('SectionEditorSubmissionDAO');
 
 			foreach ($reviewAssignments as $reviews) {
 				foreach ($reviews as $review) {
@@ -284,6 +352,7 @@ class JanewayHandler extends Handler {
 					$review_object = $review;
 					$review_array = array();
 
+					$review_array['round'] = (int)$review_data['round'];
 					$review_array['date_requested'] = $review_data['dateAssigned'];
 					$review_array['date_due'] = $review_data['dateDue'];
 					$review_array['date_confirmed'] = $review->getDateConfirmed();
@@ -292,11 +361,15 @@ class JanewayHandler extends Handler {
 					$review_array['recommendation'] = $review->getRecommendation();
 					$review_array['date_complete'] = $review->getDateCompleted();
 					$review_array['comments'] = $this->get_reviewer_comments($review->getReviewId(), $submission->getId());
+					if (method_exists($sectionEditorSubmissionDao, "getArticleDrafts")){
+						$submission_array['draft_decisions'] = $this->getDraftDecisions($sectionEditorSubmissionDAO, (int)$submission->getId());
+					}
 
 
 					$user_dao = DAORegistry::getDAO('UserDAO');
 					$user = $user_dao->getUser($review->getReviewerId());
 					$review_array['first_name'] = $user->getFirstName();
+					$review_array['middle_name'] = $user->getMiddleName();
 					$review_array['last_name'] = $user->getLastName();
 					$review_array['email'] = $user->getEmail();
 
@@ -316,6 +389,12 @@ class JanewayHandler extends Handler {
 			$copyedit_dates = $submission->getSignoff('SIGNOFF_COPYEDITING_INITIAL');
 			$copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_INITIAL');
 			$copyediting_array = array();
+			$copyediting_array["initial_file"] = $this->encode_file_meta($journal, $submission, $copyedit_file);
+			$author_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_AUTHOR');
+			$copyediting_array['author_file'] = $this->encode_file_meta($journal, $submission, $author_copyedit_file);
+			$final_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_FINAL');
+			$final_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_FINAL');
+			$copyediting_array['final_file'] = $this->encode_file_meta($journal, $submission, $final_copyedit_file);
 
 			if ($copyeditor) {
 				$initial_copyeditor_array = array(
@@ -327,7 +406,7 @@ class JanewayHandler extends Handler {
 					'complete' => $copyedit_dates->getdateCompleted(),
 				);
 				if ($copyedit_file) {
-					$initial_copyeditor_array['file'] = $this->build_download_url($journal, $submission->getId(), $copyedit_file->getFileId());
+					$initial_copyeditor_array['file'] = $this->encode_file_meta($journal, $submission, $copyedit_file);
 				}
 				$copyediting_array['initial'] = $initial_copyeditor_array;
 
@@ -340,23 +419,23 @@ class JanewayHandler extends Handler {
 				);
 
 				if ($author_copyedit_file) {
-					$author_copyedit_array['file'] = $this->build_download_url($journal, $submission->getId(), $author_copyedit_file->getFileId());
+					$author_copyedit_array['file'] = $this->encode_file_meta($journal, $submission, $author_copyedit_file);
 				}
 				$copyediting_array['author'] = $author_copyedit_array;
 
-				$final_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_FINAL');
-				$final_copyedit_file = $submission->getFileBySignoffType('SIGNOFF_COPYEDITING_FINAL');
 				$final_copyedit_array = array(
 					'notified' => $final_copyedit->getdateNotified(),
 					'underway' => $final_copyedit->getdateUnderway(),
 					'complete' => $final_copyedit->getdateCompleted(),
 				);
 				if ($final_copyedit_file) {
-					$final_copyedit_array['file'] = $this->build_download_url($journal, $submission->getId(), $final_copyedit_file->getFileId());
+					$final_copyedit_array['file'] = $this->encode_file_meta($journal, $submission, $final_copyedit_file);
 				}
 
 				$copyediting_array['final'] = $final_copyedit_array;
 
+			}
+			if ($copyediting_array) {
 				$submission_array['copyediting'] = $copyediting_array;
 			}
 
@@ -429,6 +508,7 @@ class JanewayHandler extends Handler {
 				'underway' => $layout_signoff->getDateUnderway(),
 				'complete' => $layout_signoff->getDateCompleted(),
 			);
+			$layout_array['layout_file'] = $this->encode_file_meta($journal, $submission, $layout_file);
 
 			if ($layout_editor) {
 				$layout_array['email'] = $layout_editor->getEmail();
@@ -439,7 +519,7 @@ class JanewayHandler extends Handler {
 			foreach ($galleys as $galley) {
 				$galley_array = array(
 					'label' => $galley->getGalleyLabel(),
-					'file' => $this->build_download_url($journal, $submission->getId(), $galley->getFileId()),
+					'file' => $this->encode_file_meta($journal, $submission, $galley),
 				);
 				array_push($galleys_array, $galley_array);
 			}
