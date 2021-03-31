@@ -409,10 +409,8 @@ class JanewayHandler extends Handler {
 					'notified' => $copyedit_dates->getdateNotified(),
 					'underway' => $copyedit_dates->getdateUnderway(),
 					'complete' => $copyedit_dates->getdateCompleted(),
+					'file' => $copyediting_array["initial_file"],
 				);
-				if ($copyedit_file) {
-					$initial_copyeditor_array['file'] = $this->encode_file_meta($journal, $submission, $copyedit_file);
-				}
 				$copyediting_array['initial'] = $initial_copyeditor_array;
 
 				$author_copyedit = $submission->getSignoff('SIGNOFF_COPYEDITING_AUTHOR');
@@ -421,22 +419,15 @@ class JanewayHandler extends Handler {
 					'notified' => $author_copyedit->getdateNotified(),
 					'underway' => $author_copyedit->getdateUnderway(),
 					'complete' => $author_copyedit->getdateCompleted(),
+					'file' => $copyediting_array["author_file"],
 				);
-
-				if ($author_copyedit_file) {
-					$author_copyedit_array['file'] = $this->encode_file_meta($journal, $submission, $author_copyedit_file);
-				}
 				$copyediting_array['author'] = $author_copyedit_array;
-
 				$final_copyedit_array = array(
 					'notified' => $final_copyedit->getdateNotified(),
 					'underway' => $final_copyedit->getdateUnderway(),
 					'complete' => $final_copyedit->getdateCompleted(),
+					'file' => $copyediting_array["final_file"],
 				);
-				if ($final_copyedit_file) {
-					$final_copyedit_array['file'] = $this->encode_file_meta($journal, $submission, $final_copyedit_file);
-				}
-
 				$copyediting_array['final'] = $final_copyedit_array;
 
 			}
