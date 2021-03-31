@@ -11,6 +11,7 @@ error_reporting(E_ERROR);
 
 
 import('classes.handler.Handler');
+import('classes.file.ArticleFileManager');
 require_once('JanewayDAO.inc.php');
 require_once('JanewayString.inc.php');
 
@@ -265,6 +266,7 @@ class JanewayHandler extends Handler {
 
 		foreach ($submissions->toArray() as $submission) {
 			$submission_array = array();
+			$articleFileManager = new ArticleFileManager($submission->getId());
 
 			if ($request_type == 'published') {
 				$submission =& $sectionEditorSubmissionDao->getSectionEditorSubmission($submission->getId());
@@ -285,8 +287,8 @@ class JanewayHandler extends Handler {
 			}
 
 			// Get submission file url
-			$submission_array['manuscript_file'] = $this->encode_file_meta($journal, $submission, $submission->getSubmissionFile());
-			$submission_array['review_file'] = $this->encode_file_meta($journal, $submission, $submission->getReviewFile());
+			$submission_array['manuscript_file'] = $this->encode_file_meta($journal, $submission, $articleFileManager->getFile($submission->getSubmissionFileId()));
+			$submission_array['review_file'] = $this->encode_file_meta($journal, $submission, $articleFileManager->getFile($submission->getReviewFileId()));
 
 			// Supp Files
 			$suppDAO =& DAORegistry::getDAO('SuppFileDAO');
