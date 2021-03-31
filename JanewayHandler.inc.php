@@ -244,27 +244,30 @@ class JanewayHandler extends Handler {
 		$user = $this->journal_manager_required($request);
 		$journal =& $request->getJournal();
 		$request_type = $_GET['request_type'];
+		$article_id = $_GET['article_id'];
 
 		import('classes.file.ArticleFileManager');
 		$editorSubmissionDao =& DAORegistry::getDAO('EditorSubmissionDAO');
 		$sectionEditorSubmissionDao =& DAORegistry::getDAO('SectionEditorSubmissionDAO');
 
-		if ($request_type == 'unassigned') {
-			$submissions =& $editorSubmissionDao->getEditorSubmissionsUnassigned($journal->getId(), 0, 0);
+		if ($article_id) {
+			$submissions = array($editorSubmissionDao->getEditorSubmission($article_id));
+		} elseif ($request_type == 'unassigned') {
+			$submissions =& $editorSubmissionDao->getEditorSubmissionsUnassigned($journal->getId(), 0, 0)->toArray();
 		} elseif ($request_type == 'in_review') {
-			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0);
+			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0)->toArray();
 		} elseif ($request_type == 'in_editing') {
-			$submissions =& $editorSubmissionDao->getEditorSubmissionsInEditing($journal->getId(), 0, 0);
+			$submissions =& $editorSubmissionDao->getEditorSubmissionsInEditing($journal->getId(), 0, 0)->toArray();
 		} elseif ($request_type == 'published') {
 			$articleDao =& DAORegistry::getDAO('PublishedArticleDAO');
-			$submissions =& $articleDao->getPublishedArticlesByJournalId($journal->getId());
+			$submissions =& $articleDao->getPublishedArticlesByJournalId($journal->getId())->toArray();
 		} else {
-			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0);
+			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0)->toArray();
 		}
 
 		$submissions_array = array();
 
-		foreach ($submissions->toArray() as $submission) {
+		foreach ($submissions as $submission) {
 			$submission_array = array();
 			$articleFileManager = new ArticleFileManager($submission->getId());
 
