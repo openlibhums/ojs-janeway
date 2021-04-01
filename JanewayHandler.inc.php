@@ -292,6 +292,8 @@ class JanewayHandler extends Handler {
 			// Get submission file url
 			$submission_array['manuscript_file'] = $this->encode_file_meta($journal, $submission, $articleFileManager->getFile($submission->getSubmissionFileId()));
 			$submission_array['review_file'] = $this->encode_file_meta($journal, $submission, $articleFileManager->getFile($submission->getReviewFileId()));
+			$submission_array['editor_file'] = $this->encode_file_meta($journal, $submission, $articleFileManager->getFile($submission->getEditorFileId()));
+			var_dump($submission->getAllData());
 
 			// Supp Files
 			$suppDAO =& DAORegistry::getDAO('SuppFileDAO');
