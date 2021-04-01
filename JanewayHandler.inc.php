@@ -284,7 +284,6 @@ class JanewayHandler extends Handler {
 			$submission_array['date_submitted'] = $submission->getDateSubmitted();
 			$submission_array['keywords'] = array_map('trim', explode(',', str_replace(';', ',', $submission->getLocalizedSubject())));
 			$submission_array['doi'] = $submission->getStoredPubId('doi');
-			$submission_array['doi'] = $submission->getStoredPubId('doi');
 			if (method_exists($submission, "getLicenseUrl")){
 				$submission_array['license'] = $submission->getLicenseURL();
 			}
@@ -365,7 +364,8 @@ class JanewayHandler extends Handler {
 					$review_array['date_requested'] = $review_data['dateAssigned'];
 					$review_array['date_due'] = $review_data['dateDue'];
 					$review_array['date_confirmed'] = $review->getDateConfirmed();
-					$review_array['declined'] = $review_data['declined'];
+					$review_array['declined'] = $review->getDeclined() ? true: false;
+					$review_array['cancelled'] = $review->getCancelled() ? true: false;
 					$review_array['date_acknowledged'] = $review->getDateAcknowledged();
 					$review_array['recommendation'] = $review->getRecommendation();
 					$review_array['date_complete'] = $review->getDateCompleted();
