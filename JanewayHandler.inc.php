@@ -293,7 +293,6 @@ class JanewayHandler extends Handler {
 			$submission_array['manuscript_file'] = $this->encode_file_meta($journal, $submission, $articleFileManager->getFile($submission->getSubmissionFileId()));
 			$submission_array['review_file'] = $this->encode_file_meta($journal, $submission, $articleFileManager->getFile($submission->getReviewFileId()));
 			$submission_array['editor_file'] = $this->encode_file_meta($journal, $submission, $articleFileManager->getFile($submission->getEditorFileId()));
-			var_dump($submission->getAllData());
 
 			// Supp Files
 			$suppDAO =& DAORegistry::getDAO('SuppFileDAO');
@@ -348,6 +347,9 @@ class JanewayHandler extends Handler {
 			$submission_array['editors'] = $editors_array;
 
 			// Reviews
+			$submission_array['current_review_round'] = (int)$submission->getCurrentRound();
+			$editorDecisions = $submission->getDecisions($submission->getCurrentRound());
+			$submission_array['latest_editor_decision'] = count($editorDecisions) >= 1 ? $editorDecisions[count($editorDecisions) - 1]: null;
 			$reviewAssignments =& $submission->getReviewAssignments();
 			$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
 			$reviews_array = array();
