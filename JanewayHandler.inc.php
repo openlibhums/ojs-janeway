@@ -646,7 +646,7 @@ class JanewayHandler extends Handler {
 			array_push($issues_array, $issue_array);
 		}
 		header('Content-Type: application/json');
-		echo json_encode($issues_array);
+		echo json_encode($this->utf8ize($issues_array));
 	}
 
 }
