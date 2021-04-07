@@ -249,6 +249,7 @@ class JanewayHandler extends Handler {
 		import('classes.file.ArticleFileManager');
 		$editorSubmissionDao =& DAORegistry::getDAO('EditorSubmissionDAO');
 		$sectionEditorSubmissionDao =& DAORegistry::getDAO('SectionEditorSubmissionDAO');
+		$user_dao = DAORegistry::getDAO('UserDAO');
 
 		if ($article_id) {
 			$submissions = array($editorSubmissionDao->getEditorSubmission($article_id));
@@ -348,7 +349,12 @@ class JanewayHandler extends Handler {
 			// Reviews
 			$submission_array['current_review_round'] = (int)$submission->getCurrentRound();
 			$editorDecisions = $submission->getDecisions($submission->getCurrentRound());
-			$submission_array['latest_editor_decision'] = count($editorDecisions) >= 1 ? $editorDecisions[count($editorDecisions) - 1]: null;
+			$last_decision = count($editorDecisions) >= 1 ? $editorDecisions[count($editorDecisions) - 1]: null;
+			if ($last_decision) {
+				$user = $user_dao->getUser($last_decision["editorId"]);
+				$last_decision["editor"] = $user->getEmail();
+			}
+			$submission_array['latest_editor_decision'] = $last_decision;
 			$reviewAssignments =& $submission->getReviewAssignments();
 			$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
 			$reviews_array = array();
