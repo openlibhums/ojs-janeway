@@ -348,6 +348,7 @@ class JanewayHandler extends Handler {
 
 			// Reviews
 			$submission_array['current_review_round'] = (int)$submission->getCurrentRound();
+			$submission_array['decisions'] = $submission->getDecisions();
 			$editorDecisions = $submission->getDecisions($submission->getCurrentRound());
 			$last_decision = count($editorDecisions) >= 1 ? $editorDecisions[count($editorDecisions) - 1]: null;
 			if ($last_decision) {
