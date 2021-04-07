@@ -356,6 +356,8 @@ class JanewayHandler extends Handler {
 				$last_decision["editor"] = $user->getEmail();
 			}
 			$submission_array['latest_editor_decision'] = $last_decision;
+			$revisions = $submission->getAuthorFileRevisions($submission->getCurrentRound());
+			$submission_array['author_revision'] = count($revisions) >= 1 ? $this->encode_file_meta($journal, $submission, $revisions[count($revisions) - 1]): null;
 			$reviewAssignments =& $submission->getReviewAssignments();
 			$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
 			$reviews_array = array();
