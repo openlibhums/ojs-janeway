@@ -651,6 +651,40 @@ class JanewayHandler extends Handler {
 		header('Content-Type: application/json');
 		echo json_encode($this->utf8ize($issues_array));
 	}
+	function sections($args, &$request) {
+		$user = $this->journal_manager_required($request);
+		$journal =& $request->getJournal();
+		$sections_array = array();
+
+		$sections_dao = DAORegistry::getDAO('SectionDAO');
+		$section_editors_dao = DAORegistry::getDAO('SectionEditorsDAO');
+		$sections =& $sections_dao->getJournalSections($journal->getId());
+		$sections =& $sections->toArray();
+
+
+		foreach ($sections as $section) {
+			$section_editors =& $section_editors_dao->getEditorsBySectionId($journal->getId(), $section->getId());
+			$section_array = array(
+				'title'=> $section->getSectionTitle(),
+				'indexed'=> (bool)$section->getMetaIndexed(),
+				'peer_reviewed'=> (bool)$section->getMetaReviewed(),
+				'displayed'=> (bool)$section->getHideAbout(),
+				'open_submissions'=> (bool)$section->getHideAuthor(),
+				'editors' => array(),
+			);
+			foreach ($section_editors as $section_editor) {
+				array_push($section_array['editors'], array(
+					'email'=> $section_editor["user"]->getEmail(),
+					'review'=> (bool)$section_editor["canReview"],
+					'edit'=> (bool)$section_editor["canEdit"],
+				));
+			}
+			array_push($sections_array, $section_array);
+		}
+
+		header('Content-Type: application/json');
+		echo json_encode($this->utf8ize($sections_array));
+	}
 
 }
 
