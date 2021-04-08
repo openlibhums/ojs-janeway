@@ -669,7 +669,8 @@ class JanewayHandler extends Handler {
 				'indexed'=> (bool)$section->getMetaIndexed(),
 				'peer_reviewed'=> (bool)$section->getMetaReviewed(),
 				'displayed'=> (bool)$section->getHideAbout(),
-				'open_submissions'=> (bool)$section->getHideAuthor(),
+				'open_submissions'=> (bool)$section->getEditorRestricted(),
+				'sequence' => (int)$section->getSequence(),
 				'editors' => array(),
 			);
 			foreach ($section_editors as $section_editor) {
