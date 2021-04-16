@@ -6,8 +6,14 @@
  * Written by Andy Byers, Birkbeck COllege
  *
  */
-import('classes.user.User');
-import('classes.user.UserDAO');
+if (file_exists('lib/pkp/classes/user/User.inc.php')) {
+	import('lib.pkp.classes.user.User');
+	import('lib.pkp.classes.user.UserDAO');
+} else {
+	import('classes.user.User');
+	import('classes.user.UserDAO');
+}
+
 
 class JanewayDAO extends UserDAO {
 	function &getAllUsers($journalId) {

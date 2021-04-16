@@ -11,8 +11,8 @@ import('lib.pkp.classes.plugins.GenericPlugin');
 require_once('JanewayDAO.inc.php');
 
 class JanewayPlugin extends GenericPlugin {
-	function register($category, $path) {
-		if(!parent::register($category, $path)) {
+	function register($category, $path, $mainContextId=NULL) {
+		if(!parent::register($category, $path, $mainContextId)) {
 			return false;
 		}
 		if($this->getEnabled()) {
@@ -47,8 +47,8 @@ class JanewayPlugin extends GenericPlugin {
 		return "Generates a JSON response for importing in progress content to Janeway.";
 	}
 	
-	function getTemplatePath() {
-		return parent::getTemplatePath() . 'templates/';
+	function getTemplatePath($inCore=false) {
+		return parent::getTemplatePath($inCore) . 'templates/';
 	}
 
 	function janeway_link($hookName, $args) {

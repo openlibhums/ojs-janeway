@@ -11,7 +11,11 @@ error_reporting(E_ERROR);
 
 
 import('classes.handler.Handler');
-import('classes.file.ArticleFileManager');
+if (file_exists('lib/pkp/classes/file/SubmissionFileManager.inc.php')) {
+	import('lib.pkp.classes.file.SubmissionFileManager');
+} else {
+	import('classes.file.ArticleFileManager');
+}
 require_once('JanewayDAO.inc.php');
 require_once('JanewayString.inc.php');
 
@@ -33,6 +37,7 @@ function clean_string($v) {
 }
 
 function login_required($user) {
+	var_dump($user);
 	if ($user === NULL) {
 		redirect($journal->getUrl() . '/login/signIn?source=' . $_SERVER['REQUEST_URI']);
 	}
@@ -42,10 +47,11 @@ class JanewayHandler extends Handler {
 
 	public $dao = null;
 
-	function JanewayHandler() {
-		parent::Handler();
+	public function __construct() {
+		parent::__construct();
 		$this->dao = new JanewayDAO();
 	}
+
 
 	/* sets up the template to be rendered */
 	function display($fname, $page_context=array()) {
@@ -239,7 +245,7 @@ class JanewayHandler extends Handler {
 		/janeway/
 		/janeway/index/
 	*/
-	function index($args, &$request) {
+	function index($args, $request) {
 
 		$user = $this->journal_manager_required($request);
 		$journal =& $request->getJournal();
