@@ -694,6 +694,42 @@ class JanewayHandler extends Handler {
 		header('Content-Type: application/json');
 		echo json_encode($this->utf8ize($sections_array));
 	}
+	function review_forms($args, &$request) {
+
+		$user = $this->journal_manager_required($request);
+		$journal =& $request->getJournal();
+		$forms_array = array();
+
+		$forms_dao = DAORegistry::getDAO('ReviewFormDAO');
+		$elements_dao = DAORegistry::getDAO('ReviewFormElementDAO');
+		$forms = $forms_dao->getByAssocId(ASSOC_TYPE_JOURNAL, $journal->getId())->toArray();
+		$forms_array = array();
+
+		foreach ($forms as $form) {
+			$elements_array = array();
+			$elements = $elements_dao->getReviewFormElementsByReviewForm($form->getId())->toArray();
+			foreach($elements as $element){
+				$element_array = array(
+					'id' => (int)$element->getId(),
+					'question' => $element->getLocalizedQuestion(),
+					'required' => (bool)$element->getRequired(),
+					'included' => (bool)$element->getIncluded(),
+					'form_type' => $element->getReviewFormElementTypeOptions()[$element->getElementType()],
+				);
+				array_push($elements_array, $element_array);
+
+			}
+			$form_array = array(
+				'id' => (int)$form->getId(),
+				'title' => $form->getLocalizedTitle(),
+				'elements' => $elements_array,
+			);
+
+			array_push($forms_array, $form_array);
+		}
+
+		$this->json_response($forms_array);
+	}
 
 }
 
