@@ -539,7 +539,9 @@ class JanewayHandler extends Handler {
 				array_push($galleys_array, $galley_array);
 			}
 			$layout_array['galleys'] = $galleys_array;
+			$layout_array["sent_for_typesetting"] = $this->dao->getTypesetFlag($submission->getId());
 			$submission_array['layout'] = $layout_array;
+
 
 			// Get Issue
 			$publishedArticleDao =& DAORegistry::getDAO('PublishedArticleDAO');

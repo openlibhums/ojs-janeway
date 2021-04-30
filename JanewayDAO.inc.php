@@ -22,6 +22,12 @@ class JanewayDAO extends UserDAO {
 		$returner = new DAOResultFactory($result, $this, '_returnUserFromRowWithData');
 		return $result;
 	}
+	function &getTypesetFlag($articleId) {
+		$sql = 'SELECT a.setting_value FROM article_settings a WHERE (a.setting_name = \'typesetFlag\'and a.article_id='.$articleId.') ';
+		$result =& $this->retrieve($sql);
+		$returner =  isset($result->fields["setting_value"]) ? $result->fields["setting_value"] : NULL;
+		return $returner;
+	}
 
 	function &getPublishedIssues($journalId, $rangeInfo = null) {
 		$result =& $this->retrieveRange(
