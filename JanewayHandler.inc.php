@@ -37,7 +37,6 @@ function clean_string($v) {
 }
 
 function login_required($user) {
-	var_dump($user);
 	if ($user === NULL) {
 		redirect($journal->getUrl() . '/login/signIn?source=' . $_SERVER['REQUEST_URI']);
 	}
@@ -252,6 +251,14 @@ class JanewayHandler extends Handler {
 		$request_type = $_GET['request_type'];
 		$article_id = $_GET['article_id'];
 
+		$limit = $_GET['limit'];
+		$page = $_GET['page'];
+		import('lib.pkp.classes.db.DBResultRange');
+		$rangeInfo = null;
+		if ($limit) {
+			$rangeInfo = new DBResultRange((int)$limit, (int)$page);
+		}
+
 		import('classes.file.ArticleFileManager');
 		$editorSubmissionDao =& DAORegistry::getDAO('EditorSubmissionDAO');
 		$sectionEditorSubmissionDao =& DAORegistry::getDAO('SectionEditorSubmissionDAO');
@@ -260,16 +267,16 @@ class JanewayHandler extends Handler {
 		if ($article_id) {
 			$submissions = array($editorSubmissionDao->getEditorSubmission($article_id));
 		} elseif ($request_type == 'unassigned') {
-			$submissions =& $editorSubmissionDao->getEditorSubmissionsUnassigned($journal->getId(), 0, 0)->toArray();
+			$submissions =& $editorSubmissionDao->getEditorSubmissionsUnassigned($journal->getId(), 0, 0, null, null, null, null, null, null, $rangeInfo)->toArray();
 		} elseif ($request_type == 'in_review') {
-			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0)->toArray();
+			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0, null, null, null, null, null, null, $rangeInfo)->toArray();
 		} elseif ($request_type == 'in_editing') {
-			$submissions =& $editorSubmissionDao->getEditorSubmissionsInEditing($journal->getId(), 0, 0)->toArray();
+			$submissions =& $editorSubmissionDao->getEditorSubmissionsInEditing($journal->getId(), 0, 0, null, null, null, null, null, null, $rangeInfo)->toArray();
 		} elseif ($request_type == 'published') {
 			$articleDao =& DAORegistry::getDAO('PublishedArticleDAO');
-			$submissions =& $articleDao->getPublishedArticlesByJournalId($journal->getId())->toArray();
+			$submissions =& $articleDao->getPublishedArticlesByJournalId($journal->getId(), $rangeInfo)->toArray();
 		} else {
-			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0)->toArray();
+			$submissions =& $editorSubmissionDao->getEditorSubmissionsInReview($journal->getId(), 0, 0, null, null, null, null, null, null, $rangeInfo)->toArray();
 		}
 
 		$submissions_array = array();
@@ -714,7 +721,7 @@ class JanewayHandler extends Handler {
 					'question' => $element->getLocalizedQuestion(),
 					'required' => (bool)$element->getRequired(),
 					'included' => (bool)$element->getIncluded(),
-					'form_type' => $element->getReviewFormElementTypeOptions()[$element->getElementType()],
+					'form_type' => end(explode(".", $element->getReviewFormElementTypeOptions()[$element->getElementType()])),
 				);
 				array_push($elements_array, $element_array);
 
