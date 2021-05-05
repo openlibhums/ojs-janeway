@@ -674,6 +674,44 @@ class JanewayHandler extends Handler {
 		header('Content-Type: application/json');
 		echo json_encode($this->utf8ize($issues_array));
 	}
+	function collections($args, &$request) {
+		$user = $this->journal_manager_required($request);
+		$journal =& $request->getJournal();
+		$collections_array= array();
+
+		$collections = $this->dao->getCollections();
+
+		foreach ($collections as $collection) {
+			$collection_array = array(
+				'id' => (int)$collection["id"],
+				'title' => (string)$collection["name"],
+				'date_published' => (string)$collection["date_published"],
+				'description' => (string)$collection["description"],
+				'short_description' => (string)$collection["short_description"],
+				'cover_file' => $request->getBaseUrl() . '/'. $collection["image_filename"],
+				'article_ids' => array(),
+				'editors' => array(),
+			);
+			$article_ids = $this->dao->getCollectionArticleIds($collection["id"]);
+			foreach($article_ids as $row) {
+			    array_push($collection_array["article_ids"], (int)$row["article_id"]);
+			}
+			$editors = $this->dao->getCollectionEditors($collection["id"]);
+			foreach($editors as $editor) {
+				array_push(
+					$collection_array["editors"],
+					array(
+						'role' => strtolower((string)$editor["role_name"]),
+						'email' => $editor["email"],
+
+					)
+				);
+			}
+			array_push($collections_array, $collection_array);
+		}
+		header('Content-Type: application/json');
+		echo json_encode($this->utf8ize($collections_array));
+	}
 	function sections($args, &$request) {
 		$user = $this->journal_manager_required($request);
 		$journal =& $request->getJournal();

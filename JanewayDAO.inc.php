@@ -36,5 +36,23 @@ class JanewayDAO extends UserDAO {
 		);
 		return $result;
 	}
+	function &getCollections() {
+		return $this->retrieveRange(
+			'SELECT c.* FROM collection c ORDER BY c.date_published DESC'
+		);
+		return $result;
+	}
+	function &getCollectionArticleIds($collectionId, $rangeInfo = null) {
+		$result =& $this->retrieveRange(
+			'SELECT a.article_id FROM collection_article c JOIN published_articles p ON p.published_article_id = c.published_article_id JOIN  articles a ON p.article_id = a.article_id WHERE c.collection_id = ?',
+			(int) $collectionId, $rangeInfo
+		);
+		return $result;
+	}
+	function &getCollectionEditors($collectionId, $rangeInfo = null) {
+		return $this->retrieveRange(
+			'SELECT u.email, c.role_name FROM collection_user c JOIN users u ON c.user_id = u.user_id WHERE c.collection_id = ? ORDER BY c.order',
+			(int) $collectionId, $rangeInfo
+		);
+	}
 }
-
