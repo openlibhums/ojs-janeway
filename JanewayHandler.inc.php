@@ -108,7 +108,7 @@ class JanewayHandler extends Handler {
 
 	}
 
-	function get_reviewer_comments($review_id, $submission_id) {
+	function get_reviewer_comments($review_id, $submission_id, $included = null) {
 		$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
 		$view_reivew =& $reviewAssignmentDao->getReviewAssignmentById($review_id);
 		$articleCommentDao =& DAORegistry::getDAO('ArticleCommentDAO');
@@ -121,6 +121,8 @@ class JanewayHandler extends Handler {
 			$reviewFormElementDao =& DAORegistry::getDAO('ReviewFormElementDAO');
 			$reviewFormElements =& $reviewFormElementDao->getReviewFormElements($reviewFormId);
 			foreach ($reviewFormElements as $reviewFormElement) {
+			    // "Included" elements are public elements that will be included in the email to the author
+			    if ($included === null or $included === (bool)$reviewFormElement->getIncluded()) {
 				$body .= JanewayString::html2text($reviewFormElement->getLocalizedQuestion()) . ": \n";
 				$reviewFormResponse = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElement->getId());
 				if ($reviewFormResponse) {
@@ -138,17 +140,22 @@ class JanewayHandler extends Handler {
 						$body .= "\t" . $reviewFormResponse->getValue() . "\n\n";
 					}
 				}
+			    }
 			}
 			$body .= "------------------------------------------------------\n\n";
 		} else {
+		    if ($included === null or $included === false) {
 			foreach ($article_comments as $comment) {
 				$comment_data = $comment->_data;
 				$body .= $comment_data['datePosted'] . ' - ' . $comment_data['comments'] . "\n\n";
 			}
+		    }
 		}
 
 		return $body;
 	}
+
+
 
 	function utf8ize($d) {
 
@@ -391,7 +398,8 @@ class JanewayHandler extends Handler {
 					$review_array['date_acknowledged'] = $review->getDateAcknowledged();
 					$review_array['recommendation'] = $review->getRecommendation();
 					$review_array['date_complete'] = $review->getDateCompleted();
-					$review_array['comments'] = $this->get_reviewer_comments($review->getReviewId(), $submission->getId());
+					$review_array['comments'] = $this->get_reviewer_comments($review->getReviewId(), $submission->getId(), true);
+					$review_array['comments_to_editor'] = $this->get_reviewer_comments($review->getReviewId(), $submission->getId(), false);
 					if (method_exists($sectionEditorSubmissionDao, "getArticleDrafts")){
 						$submission_array['draft_decisions'] = $this->getDraftDecisions($sectionEditorSubmissionDAO, (int)$submission->getId());
 					}
