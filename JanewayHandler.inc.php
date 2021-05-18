@@ -691,6 +691,7 @@ class JanewayHandler extends Handler {
 				'cover_file' => $request->getBaseUrl() . '/'. $collection["image_filename"],
 				'article_ids' => array(),
 				'editors' => array(),
+				'disabled' => (bool)$collection["disabled"],
 			);
 			$article_ids = $this->dao->getCollectionArticleIds($collection["id"]);
 			foreach($article_ids as $row) {
@@ -782,6 +783,13 @@ class JanewayHandler extends Handler {
 		}
 
 		$this->json_response($forms_array);
+	}
+	function journal_settings($args, &$request) {
+		$user = $this->journal_manager_required($request);
+		$journal =& $request->getJournal();
+		$settings_array = $journal->getSettings();
+		header('Content-Type: application/json');
+		echo json_encode($this->utf8ize($settings_array));
 	}
 
 }
