@@ -584,6 +584,13 @@ class JanewayHandler extends Handler {
 	}
 
 	function users($args, &$request) {
+		$limit = $_GET['limit'];
+		$page = $_GET['page'];
+		import('lib.pkp.classes.db.DBResultRange');
+		$rangeInfo = null;
+		if ($limit) {
+			$rangeInfo = new DBResultRange((int)$limit, (int)$page);
+		}
 
 		$user = $this->journal_manager_required($request);
 		$journal =& $request->getJournal();
@@ -591,7 +598,7 @@ class JanewayHandler extends Handler {
 
 		$user_dao = DAORegistry::getDAO('UserDAO');
 		$roles_dao = DAORegistry::getDAO('RoleDAO');
-		$users = $this->dao->getAllUsers($journalId=$journal->getId());
+		$users = $this->dao->getAllUsers($journalId=$journal->getId(), $rangeInfo);
 
 		foreach ($users as $user) {
 			$user_array = array(

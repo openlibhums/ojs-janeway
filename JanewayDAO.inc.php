@@ -16,9 +16,9 @@ if (file_exists('lib/pkp/classes/user/User.inc.php')) {
 
 
 class JanewayDAO extends UserDAO {
-	function &getAllUsers($journalId) {
-		$sql = 'SELECT DISTINCT u.* FROM users u LEFT JOIN roles r ON u.user_id=r.user_id WHERE (r.journal_id='.$journalId.') ';
-		$result =& $this->retrieveRange($sql);
+	function &getAllUsers($journalId, $rangeInfo=null) {
+		$sql = 'SELECT DISTINCT u.* FROM users u LEFT JOIN roles r ON u.user_id=r.user_id WHERE (r.journal_id=?) ';
+		$result =& $this->retrieveRange($sql, $journalId, $rangeInfo);
 		$returner = new DAOResultFactory($result, $this, '_returnUserFromRowWithData');
 		return $result;
 	}
