@@ -571,6 +571,7 @@ class JanewayHandler extends Handler {
 					'number' => $issue->getNumber(),
 					'year' => $issue->getYear(),
 					'date_published' => $publishedArticle->getDatePublished(),
+					'description' => $issue->getLocalizedDescription(),
 				);
 				$submission_array['publication'] = $issue_array;
 			}
