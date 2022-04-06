@@ -108,54 +108,52 @@ class JanewayHandler extends Handler {
 
 	}
 
-	function get_reviewer_comments($review_id, $submission_id, $included = null) {
-		$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
-		$view_reivew =& $reviewAssignmentDao->getReviewAssignmentById($review_id);
-		$articleCommentDao =& DAORegistry::getDAO('ArticleCommentDAO');
-		$article_comments =& $articleCommentDao->getArticleComments($view_reivew->getSubmissionId(), COMMENT_TYPE_PEER_REVIEW, $view_reivew->getId());
-		$body = '';
-		if ($view_reivew->getReviewFormId()) {
-			$reviewFormId = $view_reivew->getReviewFormId();
-			$reviewId = $view_reivew->getId();
-			$reviewFormResponseDao =& DAORegistry::getDAO('ReviewFormResponseDAO');
-			$reviewFormElementDao =& DAORegistry::getDAO('ReviewFormElementDAO');
-			$reviewFormElements =& $reviewFormElementDao->getReviewFormElements($reviewFormId);
-			foreach ($reviewFormElements as $reviewFormElement) {
-			    // "Included" elements are public elements that will be included in the email to the author
-			    if ($included === null or $included === (bool)$reviewFormElement->getIncluded()) {
-				$body .= JanewayString::html2text($reviewFormElement->getLocalizedQuestion()) . ": \n";
-				$reviewFormResponse = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElement->getId());
-				if ($reviewFormResponse) {
-					$possibleResponses = $reviewFormElement->getLocalizedPossibleResponses();
-					if (in_array($reviewFormElement->getElementType(), $reviewFormElement->getMultipleResponsesElementTypes())) {
-						if ($reviewFormElement->getElementType() == REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES) {
-							foreach ($reviewFormResponse->getValue() as $value) {
-								$body .= "\t" . JanewayString::html2text($possibleResponses[$value-1]['content']) . "\n";
-							}
-						} else {
-							$body .= "\t" . JanewayString::html2text($possibleResponses[$reviewFormResponse->getValue()-1]['content']) . "\n";
-						}
-						$body .= "\n";
-					} else {
-						$body .= "\t" . $reviewFormResponse->getValue() . "\n\n";
-					}
-				}
-			    }
-			}
-			$body .= "------------------------------------------------------\n\n";
-		} else {
-		    if ($included === null or $included === false) {
-			foreach ($article_comments as $comment) {
-				$comment_data = $comment->_data;
-				$body .= $comment_data['datePosted'] . ' - ' . $comment_data['comments'] . "\n\n";
-			}
-		    }
-		}
+	function get_reviewer_comments($review_id, $submission_id, $included = true) {
+                $reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
+                $view_reivew =& $reviewAssignmentDao->getReviewAssignmentById($review_id);
+                $articleCommentDao =& DAORegistry::getDAO('ArticleCommentDAO');
+                $article_comments =& $articleCommentDao->getArticleComments($view_reivew->getSubmissionId(), COMMENT_TYPE_PEER_REVIEW, $view_reivew->getId());
+                $body = '';
+                if ($view_reivew->getReviewFormId()) {
+                        $reviewFormId = $view_reivew->getReviewFormId();
+                        $reviewId = $view_reivew->getId();
+                        $reviewFormResponseDao =& DAORegistry::getDAO('ReviewFormResponseDAO');
+                        $reviewFormElementDao =& DAORegistry::getDAO('ReviewFormElementDAO');
+                        $reviewFormElements =& $reviewFormElementDao->getReviewFormElements($reviewFormId);
+                        foreach ($reviewFormElements as $reviewFormElement) {
+                            // "Included" elements are public elements that will be included in the email to the author
+                            if ($included === null or $included === (bool)$reviewFormElement->getIncluded()) {
+                                $body .= JanewayString::html2text($reviewFormElement->getLocalizedQuestion()) . ": \n";
+                                $reviewFormResponse = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElement->getId());
+                                if ($reviewFormResponse) {
+                                        $possibleResponses = $reviewFormElement->getLocalizedPossibleResponses();
+                                        if (in_array($reviewFormElement->getElementType(), $reviewFormElement->getMultipleResponsesElementTypes())) {
+                                                if ($reviewFormElement->getElementType() == REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES) {
+                                                        foreach ($reviewFormResponse->getValue() as $value) {
+                                                                $body .= "\t" . JanewayString::html2text($possibleResponses[$value-1]['content']) . "\n";
+                                                        }
+                                                } else {
+                                                        $body .= "\t" . JanewayString::html2text($possibleResponses[$reviewFormResponse->getValue()-1]['content']) . "\n";
+                                                }
+                                                $body .= "\n";
+                                        } else {
+                                                $body .= "\t" . $reviewFormResponse->getValue() . "\n\n";
+                                        }
+                                }
+                            }
+                        }
+                        $body .= "------------------------------------------------------\n\n";
+                } else {
+                        foreach ($article_comments as $comment) {
+                                $comment_data = $comment->_data;
+                                if ($included === (bool)$comment_data["viewable"]) {
+                                        $body .= $comment_data['datePosted'] . ' - ' . $comment_data['comments'] . "\n\n";
+                                }
+                        }
+                }
 
-		return $body;
-	}
-
-
+                return $body;
+        }
 
 	function utf8ize($d) {
 
